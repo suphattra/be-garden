@@ -1,0 +1,58 @@
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+
+# Dependency lock files
+package-lock.json
+yarn.lock
+
+# macOS files
+.DS_Store
+
+# Windows thumbnail cache files
+Thumbs.db
+
+# NPM cache
+.npm/
+node_modules
+
+# ESLint cache
+.eslintcache
+
+# Jest coverage
+/.jest
+
+# Production build files
+build/
+
+# Temporary files
+tmp/
+temp/
