@@ -1,5 +1,6 @@
 const express = require('express');
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+const db = require('./src/db/db')
 // const { createConnection } = require('typeorm');
 
 const bodyParser = require('body-parser');
@@ -7,7 +8,7 @@ const cookieParser = require('cookie-parser');
 const morgan = require("morgan");
 
 var route = require('./src/modules/routes');
-const app = express();
+const app = express(db);
 if (process.env.NODE_ENV === 'development') {
     console.log("Development Environment");
     // app.use(morgan("dev", {
@@ -19,7 +20,7 @@ if (process.env.NODE_ENV === 'development') {
     //     "stream": logger.stream
     // }));
 }
-  
+
 app.use(express.json());
 // app.get('/', (req, res) => {
 //     res.send('Hello, World!');
@@ -43,8 +44,8 @@ app.use(function(req, res, next) {
 //  app.use(express.static(path.join(__dirname, 'dist'))); 
 // createConnection()
 //   .then(() => {
-    app.listen(3000, () => {
-      console.log('Server running on port 3000');
+    app.listen(3001, () => {
+      console.log('Server running on port 3001');
     });
 //   })
 //   .catch((error) => {

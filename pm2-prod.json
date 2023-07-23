@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "exec_mode": "fork",
+      "instances": 1,
+      "script": "index.js",
+      "interpreter": "node",
+      "name": "service-dpk",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  ]
+}
