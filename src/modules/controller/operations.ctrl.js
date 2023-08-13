@@ -4,8 +4,8 @@ const masterData = require("../../models/masterData.models");
 exports.list = async function (req, res) {
     //var lov = req.query.lov;
     var ret = {
-        responseCode: 200,
-        responseMessage: 'Success'
+        resultCode: 200,
+        resultDescription: 'Success'
     };
     try {
         var filter = {};
@@ -39,14 +39,14 @@ exports.list = async function (req, res) {
        
         const result = await operationsModels.find(filter);
     
-        ret.data = result;
+        ret.resultData = result;
         res.json(ret);
         
       
     } catch (error) {
-        ret.responseCode = 500;
-        ret.responseMessage = 'Fail';
-        ret.responseDescription = error.message;
+        ret.resultCode = 500;
+        ret.message = 'Fail';
+        ret.resultDescription = error.message;
         res.json(ret);
     }
 };
@@ -159,7 +159,7 @@ exports.insert = async function (req, res) {
                 },
                 { 
                     $inc: {
-                        "value2": 1
+                        value2 : 1
                     },
                     $currentDate: {
                         updatedDate: true
@@ -188,44 +188,66 @@ exports.insert = async function (req, res) {
     }
 };
 
-exports.edit = function (req, res) {
-    var id = req.params.id;
-    var filter = {};
-    filter =  req.query
+exports.edit = async function (req, res) {
+    var operCode = req.params.id;
+    
+    //filter.operationCode = id
+
     var ret = {
-        responseCode: 200,
-        responseMessage: 'Success'
+        resultCode: 200,
+        resultDescription: 'Success',
+        message : "แก้ไขบันทึกการทำงานสำเร็จ"
     };
     try {
-        ret.data = {user:'admin',role:id};
+        const operEdit = await operationsModels.findOne({ operationCode: operCode });
+        if ( operEdit == null || operEdit == undefined) {
+            ret.resultCode = 404;
+            ret.resultDescription = 'Data Not Found';
+            ret.message = "ไม่พบข้อมูล";
+            return res.json(ret);
+        }
+
+        var dataOper = req.body;
+
+        var filter = {};
+        filter.startDate = dataOper.startDate;
+        filter.employee =  { employeeCode : dataOper.employee?.employeeCode };
+        filter.mainBranch = { branchCode : dataOper.mainBranch?.branchCode };
+        filter['operationStatus.code'] = { $in: ["MD0034", "MD0035"] };
+        filter.operationCode  = { $not: { $regex: operCode } } ;
+        
+        const result = await operationsModels.find(filter);
+        if (result.length > 0) {  
+            ret.resultCode = 400;
+            ret.message = 'มีบันทึกการทำงานนี้อยู่แล้ว';
+            ret.resultDescription = 'Duplicate';
+            res.json(ret);
+            return;
+        }
+
+        var now = new Date();
+        dataOper.updatedDate = now; 
+        dataOper.updatedBy = dataOper.createdBy;
+
+        const updatedDoc = await operationsModels.findOneAndUpdate(
+            {
+                operationCode: operCode
+            }
+             , 
+             dataOper
+             ,
+            { new: true }  // This option returns the updated document
+        );
+        
+
+
+        ret.resultData = updatedDoc;
         res.json(ret);
-        // Employee.find(filter,{
-        // }, function (err, result) {
-        //     if (err) {
-        //         logger.errorStack(err);
-        //         ret.responseCode = 500;
-        //         ret.responseMessage = 'Fail';
-        //         ret.responseDescription = err.message;
-        //         res.json(ret);
-        //         throw err;
-        //     }else{
-        //         logger.info('get user name lov list size :: ' + result.length);
-        //         if(result.length <= 0 ){
-        //             ret.responseCode = 404;
-        //             ret.responseMessage = 'Data Not Found';
-        //             res.json(ret);
-        //         }else{
-        //             ret.data = result;
-        //             res.json(ret);
-        //         }
-        //     }
-            
-        // });
       
     } catch (error) {
-        ret.responseCode = 500;
-        ret.responseMessage = 'Fail';
-        ret.responseDescription = error.message;
+        ret.resultCode = 500;
+        ret.message = 'ระบบเกิดข้อผิดพลาด';
+        ret.resultDescription = "System error :" +error.message;
         res.json(ret);
     }
 };
