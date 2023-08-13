@@ -8,4 +8,7 @@ router.get('/api/employee',employeeCtrl.employee);
 router.get('/api/employee/:id',employeeCtrl.employeeById);
 router.get('/api/masters',masterCtrl.master);
 
+const operationRoute = require('./operations.route');
+router.use('/api/operations', operationRoute);
+
 module.exports = router;
