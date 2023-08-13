@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "tsc && node dist/index.js",
+    "start": "node index.js",
     "dev": "nodemon tsc && node dist/index.js"
   },
   "devDependencies": {
