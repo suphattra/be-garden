@@ -59,33 +59,34 @@ exports.findById = async function (req, res) {
     filter =  req.query
     filter.operationCode = id
     var ret = {
-        responseCode: 200,
-        responseMessage: 'Success'
+        resultCode: 200,
+        resultDescription: 'Success'
     };
     try {
         try {
             const result = await operationsModels.find(filter);
 
             if (result.length <= 0) {
-                ret.responseCode = 404;
-                ret.responseMessage = 'Data Not Found';
+                ret.resultCode = 404;
+                ret.resultDescription = 'Data Not Found';
+                ret.message = "ไม่พบข้อมูล";
             } else {
-                ret.data = result;
+                ret.resultData = result;
             }
 
         } catch (error) {
-            ret.responseCode = 500;
-            ret.responseMessage = 'Fail';
-            ret.responseDescription = error.message;
+            ret.resultCode = 500;
+            ret.message = 'ระบบเกิดข้อผิดพลาด';
+            ret.resultDescription = error.message;
         }
 
         res.json(ret);
 
       
     } catch (error) {
-        ret.responseCode = 500;
-        ret.responseMessage = 'Fail';
-        ret.responseDescription = error.message;
+        ret.resultCode = 500;
+        ret.message = 'ระบบเกิดข้อผิดพลาด';
+        ret.resultDescription = "System error :" +error.message;
         res.json(ret);
     }
 };
