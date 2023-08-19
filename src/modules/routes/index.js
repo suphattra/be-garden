@@ -7,7 +7,11 @@ router.get('/api/v1/masters', masterCtrl.master);
 
 const operationRoute = require('./operations.route');
 const employeeRoute = require('./employee.route');
+// const branchRoute = require('./branch.route');
+const inventoryRoute = require('./inventory.route');
 router.use('/api/v1/operations', operationRoute);
 router.use('/api/v1/employee', employeeRoute);
+// router.use('/api/v1/branch', branchRoute);
+router.use('/api/v1/inventories', inventoryRoute);
 
 module.exports = router;
