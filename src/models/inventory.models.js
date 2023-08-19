@@ -10,7 +10,8 @@ const CodeValueSchema = new mongoose.Schema({
 // Employee Schema
 const InventorySchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: null },
-    inevtoryCode: { type: String, default: null },
+    inventoryCode: { type: String, default: null },
+    inventoryName: { type: String, default: null },
     // title: CodeValueSchema,
     unit: { type: String, default: null },
     // lastName: { type: String, default: null },
