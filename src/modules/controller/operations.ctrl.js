@@ -18,25 +18,23 @@ exports.list = async function (req, res) {
         }
         if(queryStr.employee){
             var employeeCodeArr = queryStr.employee.split('|');
-            filter.employee = {};
-            filter.employee.employeeCode = {$in: employeeCodeArr};
+            filter["employee.employeeCode"] = { $in: employeeCodeArr };
         }
         if(queryStr.mainBranch){
             var branchCodeArr = queryStr.mainBranch.split('|');
-            filter.mainBranch = {};
-            filter.mainBranch.branchCode = {$in: branchCodeArr};
+            filter["mainBranch.branchCode"] = { $in: branchCodeArr };
         }
         if(queryStr.subBranch){
             var subBranchCodeArr = queryStr.subBranch.split('|');
-            filter.subBranch = {};
-            filter.subBranch.branchCode = {$in: subBranchCodeArr};
+            filter["subBranch.branchCode"] = { $in: subBranchCodeArr };
         }
         if(queryStr.operationStatus){
-            var statusArr = queryStr.operationStatus.split('|');
-            filter.operationStatus = {};
-            filter.operationStatus.code = {$in: statusArr};
+            var operationStatusArr = queryStr.operationStatus.split('|');
+            //filter.operationStatus = {};
+            //filter.operationStatus = { code : { $in: operationStatusArr} 
+            filter["operationStatus.code"] = { $in: operationStatusArr };
         }
-       
+        console.log("Filter:", filter);
         const result = await operationsModels.find(filter);
     
         ret.resultData = result;
