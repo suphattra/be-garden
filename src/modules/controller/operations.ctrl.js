@@ -28,6 +28,10 @@ exports.list = async function (req, res) {
             var subBranchCodeArr = queryStr.subBranch.split('|');
             filter["subBranch.branchCode"] = { $in: subBranchCodeArr };
         }
+        if(queryStr.task){
+            var subtaskArr = queryStr.task.split('|');
+            filter["task.code"] = { $in: subtaskArr };
+        }
         if(queryStr.operationStatus){
             var operationStatusArr = queryStr.operationStatus.split('|');
             //filter.operationStatus = {};
