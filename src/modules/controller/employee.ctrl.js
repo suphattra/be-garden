@@ -13,27 +13,35 @@ exports.list = async function (req, res) {
             var startDtArr = queryStr.startDate.split('|');
             filter.startDate = { $in: startDtArr };
         }
-        if (queryStr.employee) {
-            var employeeCodeArr = queryStr.employee.split('|');
-            filter.employee = {};
-            filter.employee.employeeCode = { $in: employeeCodeArr };
+        if(queryStr.employeeCode){
+            var employeeCodeDtArr = queryStr.employeeCode.split('|');
+            filter.employeeCode = {$in: employeeCodeDtArr};
         }
-        if (queryStr.mainBranch) {
-            var branchCodeArr = queryStr.mainBranch.split('|');
-            filter.mainBranch = {};
-            filter.mainBranch.branchCode = { $in: branchCodeArr };
+        if (queryStr.gender) {
+            var genderArr = queryStr.gender.split('|');
+            filter["gender.code"] = { $in: genderArr };
         }
-        if (queryStr.subBranch) {
-            var subBranchCodeArr = queryStr.subBranch.split('|');
-            filter.subBranch = {};
-            filter.subBranch.branchCode = { $in: subBranchCodeArr };
+        if (queryStr.nationality) {
+            var nationalityArr = queryStr.nationality.split('|');
+            filter["nationality.code"] = { $in: nationalityArr };
         }
-        if (queryStr.operationStatus) {
-            var statusArr = queryStr.operationStatus.split('|');
-            filter.operationStatus = {};
-            filter.operationStatus.code = { $in: statusArr };
+        if (queryStr.employeeType) {
+            var employeeTypeArr = queryStr.employeeType.split('|');
+            filter["employeeType.code"] = { $in: employeeTypeArr };
         }
-
+        if (queryStr.employeeRole) {
+            var employeeRoleArr = queryStr.employeeRole.split('|');
+            filter["employeeRole.code"] = { $in: employeeRoleArr };
+        }
+        if(queryStr.status){
+            var statusDtArr = queryStr.status.split('|');
+            filter.status = {$in: statusDtArr};
+        }
+        if(queryStr.operationAssignDate){
+            // var statusDtArr = queryStr.operationAssignDate.split('|');
+            // filter.status = {$in: operationAssignDate}; // รอ spec
+        }
+        
         const result = await employeesModels.find(filter);
 
         ret.resultData = result;
