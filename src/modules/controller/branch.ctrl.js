@@ -9,29 +9,23 @@ exports.list = async function (req, res) {
         var queryStr = req.query
         console.log(queryStr);
 
-        if (queryStr.startDate) {
-            var startDtArr = queryStr.startDate.split('|');
-            filter.startDate = { $in: startDtArr };
+        if (queryStr.branchCode) {
+            var branchCodeDtArr = queryStr.branchCode.split('|');
+            filter.branchCode = { $in: branchCodeDtArr };
         }
-        if (queryStr.employee) {
-            var employeeCodeArr = queryStr.employee.split('|');
-            filter.employee = {};
-            filter.employee.employeeCode = { $in: employeeCodeArr };
+        if (queryStr.branchName) {
+            var branchNameCodeArr = queryStr.branchName.split('|');
+            filter.branchName = {};
+            filter.branchName = { $in: branchNameCodeArr };
         }
-        if (queryStr.mainBranch) {
-            var branchCodeArr = queryStr.mainBranch.split('|');
-            filter.mainBranch = {};
-            filter.mainBranch.branchCode = { $in: branchCodeArr };
+        if (queryStr.branchType) {
+            var branchTypeArr = queryStr.branchType.split('|');
+            filter["branchType.code"] = { $in: branchTypeArr };
         }
-        if (queryStr.subBranch) {
-            var subBranchCodeArr = queryStr.subBranch.split('|');
-            filter.subBranch = {};
-            filter.subBranch.branchCode = { $in: subBranchCodeArr };
-        }
-        if (queryStr.operationStatus) {
-            var statusArr = queryStr.operationStatus.split('|');
-            filter.operationStatus = {};
-            filter.operationStatus.code = { $in: statusArr };
+        if (queryStr.status) {
+            var statusArr = queryStr.status.split('|');
+            filter.status = {};
+            filter.status = { $in: statusArr };
         }
 
         const result = await branchsModels.find(filter);
