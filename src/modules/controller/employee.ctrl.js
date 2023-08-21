@@ -101,7 +101,7 @@ exports.unassign = async function (req, res) {
     try {
         var filter = {};
         var queryStr = req.query
-
+        var result =[]
         if (queryStr.operationAssignDate) {
             var pipeline = [
                 // {
@@ -141,9 +141,12 @@ exports.unassign = async function (req, res) {
                     }
                 }
             ];
+            result =  await employeesModels.aggregate(pipeline);
+        }else{
+            ret.resultCode = 500;
+            ret.message = 'ระบบเกิดข้อผิดพลาด';
+            ret.resultDescription = "กรุณาระบุ Operation Assign Date";
         }
-
-        const result = await employeesModels.aggregate(pipeline);
 
         ret.resultData = result;
         res.json(ret);

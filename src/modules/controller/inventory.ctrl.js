@@ -52,7 +52,7 @@ exports.findById = async function (req, res) {
     var id = req.params.id;
     var filter = {};
     filter = req.query
-    filter.employeeCode = id
+    filter.inventoryCode = id
     var ret = {
         resultCode: 200,
         resultDescription: 'Success'

@@ -39,6 +39,7 @@ const InventorySchema = new mongoose.Schema({
 const operationsSchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: null },
     startDate: { type: String, default: null },
+    operationCode: { type: String, default: null },
     employee: EmployeeSchema,
     mainBranch: BranchSchema,
     subBranch: BranchSchema,

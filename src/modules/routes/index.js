@@ -11,7 +11,7 @@ const branchRoute = require('./branch.route');
 const inventoryRoute = require('./inventory.route');
 router.use('/api/v1/operations', operationRoute);
 router.use('/api/v1/employee', employeeRoute);
-router.use('/api/v1/branch', branchRoute);
+router.use('/api/v1/branches', branchRoute);
 router.use('/api/v1/inventories', inventoryRoute);
 
 module.exports = router;
