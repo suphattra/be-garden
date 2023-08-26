@@ -8,6 +8,8 @@ exports.list = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         console.log(queryStr);
+        let offset = req.query.offset || 0;
+        let limit= req.query.limit ||10;
 
         if (queryStr.startDate) {
             var startDtArr = queryStr.startDate.split('|');
@@ -16,6 +18,14 @@ exports.list = async function (req, res) {
         if (queryStr.employeeCode) {
             var employeeCodeDtArr = queryStr.employeeCode.split('|');
             filter.employeeCode = { $in: employeeCodeDtArr };
+        }
+        if(queryStr.employeeFullName){
+            const condition = {$regex : '.*' + queryStr.employeeFullName + '.*',$options: 'i'}
+            filter.$or=[
+                {"firstName": condition},
+                {"lastName": condition},
+                {"nickName": condition}
+            ]
         }
         if (queryStr.gender) {
             var genderArr = queryStr.gender.split('|');
@@ -42,9 +52,11 @@ exports.list = async function (req, res) {
             // filter.status = {$in: operationAssignDate}; // รอ spec
         }
 
-        const result = await employeesModels.find(filter);
-
+        const result = await employeesModels.find(filter).skip(offset).limit(limit);;
+        const resultTotal = await employeesModels.find(filter);
+        
         ret.resultData = result;
+        ret.total = resultTotal.length
         res.json(ret);
 
 
