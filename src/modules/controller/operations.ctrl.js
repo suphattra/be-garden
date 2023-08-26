@@ -13,6 +13,7 @@ exports.list = async function (req, res) {
         console.log(queryStr);
         let offset = req.query.offset || 0;
         let limit= req.query.limit ||10;
+        let sort = {}
 
         if(queryStr.startDate){
             var startDtArr = queryStr.startDate.split('|');
@@ -40,8 +41,12 @@ exports.list = async function (req, res) {
             //filter.operationStatus = { code : { $in: operationStatusArr} 
             filter["operationStatus.code"] = { $in: operationStatusArr };
         }
+        if(queryStr.sort){
+        let desc = queryStr.desc == 'ASC' ?  -1 : 1
+           sort =  {[req.query.sort] : desc};
+        }
         console.log("Filter:", filter);
-        const result = await operationsModels.find(filter).skip(offset).limit(limit);
+        const result = await operationsModels.find(filter).skip(offset).limit(limit).sort(sort);
         const resultTotal = await operationsModels.find(filter);
         ret.resultData = result;
         ret.total = resultTotal.length
