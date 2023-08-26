@@ -42,7 +42,7 @@ exports.list = async function (req, res) {
             filter["operationStatus.code"] = { $in: operationStatusArr };
         }
         if(queryStr.sort){
-        let desc = queryStr.desc == 'ASC' ?  -1 : 1
+        let desc = queryStr.desc == 'DESC' ?  -1 : 1
            sort =  {[req.query.sort] : desc};
         }
         console.log("Filter:", filter);
