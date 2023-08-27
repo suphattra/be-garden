@@ -178,8 +178,7 @@ exports.insert = async function (req, res) {
     var ret = {
         resultCode: 200,
         resultDescription: 'Success',
-        message : "เพิ่มพนักงานสำเร็จ",
-        resultData : {}
+        message : "เพิ่มพนักงานสำเร็จ"
     };
 
     try {
@@ -261,7 +260,7 @@ exports.insert = async function (req, res) {
 
         var insertResult = await employeesModels.insertMany(dataList);
 
-        ret.data = {};
+        //ret.data = {};
         res.json(ret);
       
     } catch (error) {
