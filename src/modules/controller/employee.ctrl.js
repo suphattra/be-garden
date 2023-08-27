@@ -1,4 +1,5 @@
 const employeesModels = require("../../models/employee.models");
+const masterData = require("../../models/masterData.models");
 exports.list = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -172,3 +173,101 @@ exports.unassign = async function (req, res) {
     }
 };
 
+exports.insert = async function (req, res) {
+    const dataList = req.body.dataList;
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success',
+        message : "เพิ่มพนักงานสำเร็จ",
+        resultData : {}
+    };
+
+    try {
+        if(dataList == null || dataList == undefined || dataList.length <= 0){
+            ret.resultCode = 400;
+            ret.message = 'Bad Request';
+            ret.resultDescription = 'DataList is required';
+            res.json(ret);
+            return;
+        }
+
+      
+        //check duplicate
+        for (let i = 0; i < dataList.length; i++) {
+            var emp = dataList[i];
+            var filter = {};
+            filter.firstName = emp.firstName;
+            filter.lastName = emp.lastName;
+            filter.status = "Active";
+
+            const result = await employeesModels.find(filter);
+
+            if (result.length > 0) {  
+                ret.resultCode = 404;
+                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: '+ emp.firstName + ' ' + emp.lastName;
+                ret.resultDescription = 'Duplicate';
+                res.json(ret);
+                return;
+            }
+        }
+
+        var employeeList = [];
+        for (let i = 0; i < dataList.length; i++) {
+            var dataEmp = dataList[i];
+
+            
+            var seqEmpCode = await masterData.findOne({
+                "type": "SEQ",
+                "subType" : "EMPLOYEE_CODE",
+                "status" : "Active"
+            });
+
+            if(seqEmpCode == null || seqEmpCode == undefined || seqEmpCode.length <= 0){
+                ret.resultCode = 400;
+                ret.message = 'ไม่พบข้อมูล SEQ';
+                ret.resultDescription = 'Not Found';
+                res.json(ret);
+                return;
+            }
+            
+            var employeeCode = seqEmpCode.value1 + seqEmpCode.value2;    //prefix + running number
+            dataEmp.employeeCode = employeeCode;
+
+            //update seq
+            var seqOperCodeUpdate = await masterData.updateOne(
+                {
+                    "type": "SEQ",
+                    "subType": "EMPLOYEE_CODE",
+                    "status": "Active"
+                },
+                { 
+                    $inc: {
+                        value2 : 1
+                    },
+                    $currentDate: {
+                        updatedDate: true
+                    }
+                });
+
+            var now = new Date();
+            dataEmp.createdDate = now;
+            dataEmp.updatedDate = now;
+            dataEmp.updatedBy = dataEmp.createdBy;
+
+            const newEmployee = new employeesModels(dataEmp);
+            employeeList.push(newEmployee);
+            //await newEmployee.save();
+        }
+
+        var insertResult = await employeesModels.insertMany(dataList);
+
+        ret.data = {};
+        res.json(ret);
+      
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'ระบบเกิดข้อผิดพลาด';
+        ret.resultDescription = "System error :" +error.message;
+        res.json(ret);
+    }
+};
