@@ -270,3 +270,65 @@ exports.insert = async function (req, res) {
         res.json(ret);
     }
 };
+
+exports.edit = async function (req, res) {
+    var empCode = req.params.id;
+
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success',
+        message : "แก้ไขข้อมูลพนักงานสำเร็จ"
+    };
+    try {
+        const empEdit = await employeesModels.findOne({ employeeCode: empCode });
+        if ( empEdit == null || empEdit == undefined) {
+            ret.resultCode = 404;
+            ret.resultDescription = 'Data Not Found';
+            ret.message = "ไม่พบข้อมูล";
+            return res.json(ret);
+        }
+
+        var dataEmp = req.body;
+        if(dataEmp.firstName != empEdit.firstName || dataEmp.lastName != empEdit.lastName){
+            var filter = {};
+            filter.firstName = dataEmp.firstName;
+            filter.lastName = dataEmp.lastName;
+            filter.status = "Active";
+    
+            const result = await employeesModels.find(filter);
+    
+            if (result.length > 0) {  
+                ret.resultCode = 400;
+                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: '+ dataEmp.firstName + ' ' + dataEmp.lastName;
+                ret.resultDescription = 'Duplicate';
+                res.json(ret);
+                return;
+            }
+        }
+
+        var now = new Date();
+        dataEmp.updatedDate = now; 
+        dataEmp.updatedBy = dataEmp.updatedBy || dataEmp.createdBy;
+
+        const updatedDoc = await employeesModels.findOneAndUpdate(
+            {
+                employeeCode: empCode
+            }
+             , 
+             dataEmp
+             ,
+            { new: true }  // This option returns the updated document
+        );
+        
+
+
+        ret.resultData = updatedDoc;
+        res.json(ret);
+      
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'ระบบเกิดข้อผิดพลาด';
+        ret.resultDescription = "System error :" +error.message;
+        res.json(ret);
+    }
+};
