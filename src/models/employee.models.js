@@ -17,6 +17,7 @@ const EmployeeSchema = new mongoose.Schema({
     nickName: { type: String, default: null },
     gender: CodeValueSchema,
     nationality: CodeValueSchema,
+    birthDate: { type: Date, default: null },
     phoneContact1: { type: String, default: null },
     phoneContact2: { type: String, default: null },
     employeeType: CodeValueSchema,
