@@ -17,7 +17,7 @@ exports.list = async function (req, res) {
 
         if (queryStr.startDate && queryStr.endDate) {
             var startDtArr = queryStr.startDate.split('|');
-            filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate };
+            filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate + ' 00:00:00'};
         }
         if (queryStr.employee) {
             var employeeCodeArr = queryStr.employee.split('|');
