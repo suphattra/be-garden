@@ -9,41 +9,41 @@ exports.list = async function (req, res) {
     };
     try {
         var filter = {};
-        var queryStr  =  req.query
+        var queryStr = req.query
         console.log(queryStr);
         let offset = req.query.offset || 0;
-        let limit= req.query.limit ||10;
+        let limit = req.query.limit || 10;
         let sort = {}
 
-        if(queryStr.startDate){
+        if (queryStr.startDate && queryStr.endDate) {
             var startDtArr = queryStr.startDate.split('|');
-            filter.startDate = {$in: startDtArr};
+            filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate };
         }
-        if(queryStr.employee){
+        if (queryStr.employee) {
             var employeeCodeArr = queryStr.employee.split('|');
             filter["employee.employeeCode"] = { $in: employeeCodeArr };
         }
-        if(queryStr.mainBranch){
+        if (queryStr.mainBranch) {
             var branchCodeArr = queryStr.mainBranch.split('|');
             filter["mainBranch.branchCode"] = { $in: branchCodeArr };
         }
-        if(queryStr.subBranch){
+        if (queryStr.subBranch) {
             var subBranchCodeArr = queryStr.subBranch.split('|');
             filter["subBranch.branchCode"] = { $in: subBranchCodeArr };
         }
-        if(queryStr.task){
+        if (queryStr.task) {
             var subtaskArr = queryStr.task.split('|');
             filter["task.code"] = { $in: subtaskArr };
         }
-        if(queryStr.operationStatus){
+        if (queryStr.operationStatus) {
             var operationStatusArr = queryStr.operationStatus.split('|');
             //filter.operationStatus = {};
             //filter.operationStatus = { code : { $in: operationStatusArr} 
             filter["operationStatus.code"] = { $in: operationStatusArr };
         }
-        if(queryStr.sort){
-        let desc = queryStr.desc == 'DESC' ?  -1 : 1
-           sort =  {[req.query.sort] : desc};
+        if (queryStr.sort) {
+            let desc = queryStr.desc == 'DESC' ? -1 : 1
+            sort = { [req.query.sort]: desc };
         }
         console.log("Filter:", filter);
         const result = await operationsModels.find(filter).skip(offset).limit(limit).sort(sort);
@@ -51,8 +51,8 @@ exports.list = async function (req, res) {
         ret.resultData = result;
         ret.total = resultTotal.length
         res.json(ret);
-        
-      
+
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'Fail';
@@ -66,7 +66,7 @@ exports.list = async function (req, res) {
 exports.findById = async function (req, res) {
     var id = req.params.id;
     var filter = {};
-    filter =  req.query
+    filter = req.query
     filter.operationCode = id
     var ret = {
         resultCode: 200,
@@ -92,11 +92,11 @@ exports.findById = async function (req, res) {
 
         res.json(ret);
 
-      
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
-        ret.resultDescription = "System error :" +error.message;
+        ret.resultDescription = "System error :" + error.message;
         res.json(ret);
     }
 };
@@ -106,11 +106,11 @@ exports.insert = async function (req, res) {
     var ret = {
         resultCode: 200,
         resultDescription: 'Success',
-        message : "สร้างบันทึกการทำงานสำเร็จ"
+        message: "สร้างบันทึกการทำงานสำเร็จ"
     };
 
     try {
-        if(dataList == null || dataList == undefined || dataList.length <= 0){
+        if (dataList == null || dataList == undefined || dataList.length <= 0) {
             ret.resultCode = 400;
             ret.message = 'Bad Request';
             ret.resultDescription = 'DataList is required';
@@ -118,20 +118,19 @@ exports.insert = async function (req, res) {
             return;
         }
 
-      
         //check duplicate
         for (let i = 0; i < dataList.length; i++) {
             var dataOper = dataList[i];
             var filter = {};
             filter.startDate = dataOper.startDate;
-            filter.employee =  { employeeCode : dataOper.employee?.employeeCode };
-            filter.mainBranch = { branchCode : dataOper.mainBranch?.branchCode };
-            filter.task = {code : dataOper.task?.code };
-           // filter.operationStatus = { code : { $in: [ "MD0034","MD0035"] } };
+            filter.employee = { employeeCode: dataOper.employee?.employeeCode };
+            filter.mainBranch = { branchCode: dataOper.mainBranch?.branchCode };
+            filter.task = { code: dataOper.task?.code };
+            // filter.operationStatus = { code : { $in: [ "MD0034","MD0035"] } };
             filter['operationStatus.code'] = { $in: ["MD0034", "MD0035"] };
             const result = await operationsModels.find(filter);
 
-            if (result.length > 0) {  
+            if (result.length > 0) {
                 ret.resultCode = 400;
                 ret.message = 'มีบันทึกการทำงานนี้อยู่แล้ว';
                 ret.resultDescription = 'Duplicate';
@@ -139,25 +138,23 @@ exports.insert = async function (req, res) {
                 return;
             }
         }
-
         for (let i = 0; i < dataList.length; i++) {
             var dataOper = dataList[i];
 
-            
+
             var seqOperCode = await masterData.findOne({
                 "type": "SEQ",
-                "subType" : "OPERATION_CODE",
-                "status" : "Active"
+                "subType": "OPERATION_CODE",
+                "status": "Active"
             });
-
-            if(seqOperCode == null || seqOperCode == undefined || seqOperCode.length <= 0){
+            if (seqOperCode == null || seqOperCode == undefined || seqOperCode.length <= 0) {
                 ret.resultCode = 400;
                 ret.message = 'ไม่พบข้อมูล SEQ';
                 ret.resultDescription = 'Not Found';
                 res.json(ret);
                 return;
             }
-            
+
             var operationCode = seqOperCode.value1 + seqOperCode.value2;    //prefix + running number
             dataOper.operationCode = operationCode;
 
@@ -168,50 +165,50 @@ exports.insert = async function (req, res) {
                     "subType": "OPERATION_CODE",
                     "status": "Active"
                 },
-                { 
+                {
                     $inc: {
-                        value2 : 1
+                        value2: 1
                     },
                     $currentDate: {
                         updatedDate: true
                     }
                 });
 
-                var now = new Date();
-                dataOper.createdDate = now;
-                dataOper.updatedDate = now;
-                dataOper.updatedBy = dataOper.createdBy;
+            var now = new Date();
+            dataOper.createdDate = now;
+            dataOper.updatedDate = now;
+            dataOper.updatedBy = dataOper.createdBy;
 
             //dataOper._id = new mongoose.Types.ObjectId();
             const newOperation = new operationsModels(dataOper);
             await newOperation.save();
         }
-       
+
 
         ret.data = {};
         res.json(ret);
-      
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
-        ret.resultDescription = "System error :" +error.message;
+        ret.resultDescription = "System error :" + error.message;
         res.json(ret);
     }
 };
 
 exports.edit = async function (req, res) {
     var operCode = req.params.id;
-    
+
     //filter.operationCode = id
 
     var ret = {
         resultCode: 200,
         resultDescription: 'Success',
-        message : "แก้ไขบันทึกการทำงานสำเร็จ"
+        message: "แก้ไขบันทึกการทำงานสำเร็จ"
     };
     try {
         const operEdit = await operationsModels.findOne({ operationCode: operCode });
-        if ( operEdit == null || operEdit == undefined) {
+        if (operEdit == null || operEdit == undefined) {
             ret.resultCode = 404;
             ret.resultDescription = 'Data Not Found';
             ret.message = "ไม่พบข้อมูล";
@@ -222,13 +219,13 @@ exports.edit = async function (req, res) {
 
         var filter = {};
         filter.startDate = dataOper.startDate;
-        filter.employee =  { employeeCode : dataOper.employee?.employeeCode };
-        filter.mainBranch = { branchCode : dataOper.mainBranch?.branchCode };
+        filter.employee = { employeeCode: dataOper.employee?.employeeCode };
+        filter.mainBranch = { branchCode: dataOper.mainBranch?.branchCode };
         filter['operationStatus.code'] = { $in: ["MD0034", "MD0035"] };
-        filter.operationCode  = { $not: { $regex: operCode } } ;
-        
+        filter.operationCode = { $not: { $regex: operCode } };
+
         const result = await operationsModels.find(filter);
-        if (result.length > 0) {  
+        if (result.length > 0) {
             ret.resultCode = 400;
             ret.message = 'มีบันทึกการทำงานนี้อยู่แล้ว';
             ret.resultDescription = 'Duplicate';
@@ -237,28 +234,28 @@ exports.edit = async function (req, res) {
         }
 
         var now = new Date();
-        dataOper.updatedDate = now; 
+        dataOper.updatedDate = now;
         dataOper.updatedBy = dataOper.createdBy;
 
         const updatedDoc = await operationsModels.findOneAndUpdate(
             {
                 operationCode: operCode
             }
-             , 
-             dataOper
-             ,
+            ,
+            dataOper
+            ,
             { new: true }  // This option returns the updated document
         );
-        
+
 
 
         ret.resultData = updatedDoc;
         res.json(ret);
-      
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
-        ret.resultDescription = "System error :" +error.message;
+        ret.resultDescription = "System error :" + error.message;
         res.json(ret);
     }
 };
