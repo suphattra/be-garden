@@ -1,4 +1,5 @@
 const branchsModels = require("../../models/branch.models");
+const masterData = require("../../models/masterData.models");
 exports.list = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -71,6 +72,81 @@ exports.findById = async function (req, res) {
 
         res.json(ret);
 
+
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'ระบบเกิดข้อผิดพลาด';
+        ret.resultDescription = "System error :" + error.message;
+        res.json(ret);
+    }
+};
+
+exports.insert = async function (req, res) {
+    const dataList = req.body.dataList;
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success',
+        message: "สร้างบันทึกการทำงานสำเร็จ"
+    };
+
+    try {
+        if (dataList == null || dataList == undefined || dataList.length <= 0) {
+            ret.resultCode = 400;
+            ret.message = 'Bad Request';
+            ret.resultDescription = 'DataList is required';
+            res.json(ret);
+            return;
+        }
+
+        for (let i = 0; i < dataList.length; i++) {
+            var dataOper = dataList[i];
+
+
+            var seqOperCode = await masterData.findOne({
+                "type": "SEQ",
+                "subType": "BRANCH_CODE",
+                "status": "Active"
+            });
+            if (seqOperCode == null || seqOperCode == undefined || seqOperCode.length <= 0) {
+                ret.resultCode = 400;
+                ret.message = 'ไม่พบข้อมูล SEQ';
+                ret.resultDescription = 'Not Found';
+                res.json(ret);
+                return;
+            }
+
+            var branchCode  = seqOperCode.value1 + seqOperCode.value2;    //prefix + running number
+            dataOper.branchCode  = branchCode ;
+
+            //update seq
+            var seqOperCodeUpdate = await masterData.updateOne(
+                {
+                    "type": "SEQ",
+                    "subType": "BRANCH_CODE",
+                    "status": "Active"
+                },
+                {
+                    $inc: {
+                        value2: 1
+                    },
+                    $currentDate: {
+                        updatedDate: true
+                    }
+                });
+
+            var now = new Date();
+            dataOper.createdDate = now;
+            dataOper.updatedDate = now;
+            dataOper.updatedBy = dataOper.createdBy;
+
+            //dataOper._id = new mongoose.Types.ObjectId();
+            const newOperation = new branchsModels(dataOper);
+            await newOperation.save();
+        }
+
+
+        ret.data = {};
+        res.json(ret);
 
     } catch (error) {
         ret.resultCode = 500;
