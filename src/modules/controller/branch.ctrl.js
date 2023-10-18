@@ -30,8 +30,9 @@ exports.list = async function (req, res) {
         }
 
         const result = await branchsModels.find(filter);
-
+        const resultTotal = await branchsModels.find(filter);
         ret.resultData = result;
+        ret.total = resultTotal.length
         res.json(ret);
 
 
