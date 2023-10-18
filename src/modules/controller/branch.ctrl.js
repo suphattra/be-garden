@@ -9,6 +9,9 @@ exports.list = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         console.log(queryStr);
+        let offset = req.query.offset || 0;
+        let limit = req.query.limit || 10;
+        let sort = {}
 
         if (queryStr.branchCode) {
             var branchCodeDtArr = queryStr.branchCode.split('|');
@@ -29,7 +32,7 @@ exports.list = async function (req, res) {
             filter.status = { $in: statusArr };
         }
 
-        const result = await branchsModels.find(filter);
+        const result = await branchsModels.find(filter).skip(offset).limit(limit).sort(sort);;
         const resultTotal = await branchsModels.find(filter);
         ret.resultData = result;
         ret.total = resultTotal.length
