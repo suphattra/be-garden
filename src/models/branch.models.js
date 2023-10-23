@@ -22,6 +22,9 @@ const CodeProductValueSchema = new mongoose.Schema({
     value1: { type: String, default: null },
     amount: { type: String, default: null },
 });
+const PlanPictureSchema = new mongoose.Schema({
+    filePath: { type: String, default: null }
+});
 // Branch Schema
 const BranchSchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: null },
@@ -34,7 +37,7 @@ const BranchSchema = new mongoose.Schema({
     address: { type: String, default: null },
     annualIncome: { type: Array, default: [] },
     remark: { type: String, default: null },
-    // planPicture:{ type: String, default: null },
+    planPicture: PlanPictureSchema,
     createdBy: { type: String, default: null },
     createdDate: { type: Date, default: null },
     updatedBy: { type: String, default: null },
