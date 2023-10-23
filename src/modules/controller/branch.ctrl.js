@@ -159,3 +159,65 @@ exports.insert = async function (req, res) {
         res.json(ret);
     }
 };
+
+exports.edit = async function (req, res) {
+    var branchCode = req.params.id;
+
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success',
+        message : "แก้ไขข้อมูลพนักงานสำเร็จ"
+    };
+    try {
+        const empEdit = await branchsModels.findOne({ branchCode: branchCode });
+        if ( empEdit == null || empEdit == undefined) {
+            ret.resultCode = 404;
+            ret.resultDescription = 'Data Not Found';
+            ret.message = "ไม่พบข้อมูล";
+            return res.json(ret);
+        }
+
+        var dataBranch = req.body;
+        // if(dataBranch.firstName != empEdit.firstName || dataBranch.lastName != empEdit.lastName){
+        //     var filter = {};
+        //     filter.firstName = dataBranch.firstName;
+        //     filter.lastName = dataBranch.lastName;
+        //     filter.status = "Active";
+    
+        //     const result = await branchsModels.find(filter);
+    
+        //     if (result.length > 0) {  
+        //         ret.resultCode = 400;
+        //         ret.message = 'มีพนักงานคนนี้อยู่แล้ว: '+ dataBranch.firstName + ' ' + dataBranch.lastName;
+        //         ret.resultDescription = 'Duplicate';
+        //         res.json(ret);
+        //         return;
+        //     }
+        // }
+
+        var now = new Date();
+        dataBranch.updatedDate = now; 
+        dataBranch.updatedBy = dataBranch.updatedBy || dataBranch.createdBy;
+
+        const updatedDoc = await branchsModels.findOneAndUpdate(
+            {
+                branchCode: branchCode
+            }
+             , 
+             dataBranch
+             ,
+            { new: true }  // This option returns the updated document
+        );
+        
+
+
+        ret.resultData = updatedDoc;
+        res.json(ret);
+      
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'ระบบเกิดข้อผิดพลาด';
+        ret.resultDescription = "System error :" +error.message;
+        res.json(ret);
+    }
+};
