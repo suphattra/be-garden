@@ -7,36 +7,38 @@ exports.list = async function (req, res) {
     try {
         var filter = {};
         var queryStr = req.query
+        let offset = req.query.offset || 0;
+        let limit = req.query.limit || 10;
+        let sort = {}
         console.log(queryStr);
 
-        if (queryStr.startDate) {
-            var startDtArr = queryStr.startDate.split('|');
-            filter.startDate = { $in: startDtArr };
+        if (queryStr.importDateFrom && queryStr.importDateTo) {
+            filter.importDate = { $gte: queryStr.importDateFrom, $lt: queryStr.importDateTo + ' 00:00:00'};
         }
-        if (queryStr.employee) {
-            var employeeCodeArr = queryStr.employee.split('|');
-            filter.employee = {};
-            filter.employee.employeeCode = { $in: employeeCodeArr };
+        if(queryStr.inventoryCode){
+            const condition = {$regex : '.*' + queryStr.inventoryCode + '.*',$options: 'i'}
+            filter.$or=[
+                {"inventoryCode": condition}
+            ]
         }
-        if (queryStr.mainBranch) {
-            var branchCodeArr = queryStr.mainBranch.split('|');
-            filter.mainBranch = {};
-            filter.mainBranch.branchCode = { $in: branchCodeArr };
+        if(queryStr.inventoryName){
+            const condition = {$regex : '.*' + queryStr.inventoryName + '.*',$options: 'i'}
+            filter.$or=[
+                {"inventoryName": condition}
+            ]
         }
-        if (queryStr.subBranch) {
-            var subBranchCodeArr = queryStr.subBranch.split('|');
-            filter.subBranch = {};
-            filter.subBranch.branchCode = { $in: subBranchCodeArr };
+        if (queryStr.inventoryType) {
+            var codeArr = queryStr.inventoryType.split('|');
+            filter["inventoryType.code"] = { $in: codeArr };
         }
-        if (queryStr.operationStatus) {
-            var statusArr = queryStr.operationStatus.split('|');
-            filter.operationStatus = {};
-            filter.operationStatus.code = { $in: statusArr };
+        if (queryStr.paymentType) {
+            var codeArr = queryStr.paymentType.split('|');
+            filter["paymentType.code"] = { $in: codeArr };
         }
-
         const result = await inventoryModels.find(filter);
-
+        const resultTotal = await inventoryModels.find(filter).skip(offset).limit(limit).sort(sort);
         ret.resultData = result;
+        ret.total = resultTotal.length
         res.json(ret);
 
 

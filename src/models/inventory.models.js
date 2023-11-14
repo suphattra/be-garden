@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const CodeValueSchema = new mongoose.Schema({
     code: { type: String, default: null },
     value1: { type: String, default: null },
-    value2: { type: mongoose.Schema.Types.Mixed, default: null } // Can be String or Number
+    // value2: { type: mongoose.Schema.Types.Mixed, default: null } // Can be String or Number
 });
 
 // Employee Schema
@@ -12,7 +12,8 @@ const InventorySchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: null },
     inventoryCode: { type: String, default: null },
     inventoryName: { type: String, default: null },
-    // title: CodeValueSchema,
+    inventoryType: CodeValueSchema,
+    paymentType: CodeValueSchema,
     unit: { type: String, default: null },
     // lastName: { type: String, default: null },
     // nickName: { type: String, default: null },
