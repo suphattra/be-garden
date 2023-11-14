@@ -20,7 +20,10 @@ if (process.env.NODE_ENV === 'development') {
     //     "stream": logger.stream
     // }));
 }
-
+app.use(bodyParser.json({limit: '200mb', extended: true}));
+app.use(bodyParser.urlencoded({limit: "200mb", extended: true, parameterLimit:500000}));
+app.use(bodyParser.text({ limit: '200mb' }));
+app.use(cookieParser());
 app.use(express.json());
 // app.get('/', (req, res) => {
 //     res.send('Hello, World!');
@@ -29,10 +32,7 @@ app.use(express.json());
 //     extended: true
 // }));
 // app.use(bodyParser.json());
-app.use(bodyParser.json({limit: '200mb', extended: true}));
-app.use(bodyParser.urlencoded({limit: "200mb", extended: true, parameterLimit:500000}));
-app.use(bodyParser.text({ limit: '200mb' }));
-app.use(cookieParser());
+
 
 app.use(function (req, res, next) {
     next();
