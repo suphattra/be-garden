@@ -6,16 +6,26 @@ const CodeValueSchema = new mongoose.Schema({
     value1: { type: String, default: null },
     // value2: { type: mongoose.Schema.Types.Mixed, default: null } // Can be String or Number
 });
-
+const BillPictureSchema = new mongoose.Schema({
+    filePath: { type: String, default: null }
+});
 // Employee Schema
 const InventorySchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: null },
+    importDate: { type: Date, default: null },
     inventoryCode: { type: String, default: null },
     inventoryName: { type: String, default: null },
+    inventoryTradeName: { type: String, default: null },
+    pricePerUnit: { type: String, default: null },
+    sellerName: { type: String, default: null },
     inventoryType: CodeValueSchema,
     paymentType: CodeValueSchema,
     unit: { type: String, default: null },
-    // lastName: { type: String, default: null },
+    amount: { type: String, default: null },
+    bill: BillPictureSchema,
+    remark: { type: String, default: null },
+    status: { type: String, default: null },
+    distribution : CodeValueSchema,
     // nickName: { type: String, default: null },
     // gender: CodeValueSchema,
     // nationality: CodeValueSchema,

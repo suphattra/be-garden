@@ -35,6 +35,7 @@ const BranchSchema = new mongoose.Schema({
     supervisor: EmployeeSchema,
     areaSize: { type: Number, default: null },
     address: { type: String, default: null },
+    status: { type: String, default: null },
     annualIncome: { type: Array, default: [] },
     remark: { type: String, default: null },
     planPicture: PlanPictureSchema,
