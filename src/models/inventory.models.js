@@ -6,6 +6,12 @@ const CodeValueSchema = new mongoose.Schema({
     value1: { type: String, default: null },
     // value2: { type: mongoose.Schema.Types.Mixed, default: null } // Can be String or Number
 });
+const CodeValueDisSchema = new mongoose.Schema({
+    branchCode: { type: String, default: null },
+    branchName: { type: String, default: null },
+    amount: { type: String, default: null },
+    // value2: { type: mongoose.Schema.Types.Mixed, default: null } // Can be String or Number
+});
 const BillPictureSchema = new mongoose.Schema({
     filePath: { type: String, default: null }
 });
@@ -25,7 +31,7 @@ const InventorySchema = new mongoose.Schema({
     bill: BillPictureSchema,
     remark: { type: String, default: null },
     status: { type: String, default: null },
-    distribution : CodeValueSchema,
+    distribution : [CodeValueDisSchema],
     // nickName: { type: String, default: null },
     // gender: CodeValueSchema,
     // nationality: CodeValueSchema,

@@ -172,7 +172,7 @@ exports.edit = async function (req, res) {
         message : "แก้ไขข้อมูลพนักงานสำเร็จ"
     };
     try {
-        const empEdit = await branchsModels.findOne({ inventoryCode: inventoryCode });
+        const empEdit = await inventoryModels.findOne({ inventoryCode: inventoryCode });
         if ( empEdit == null || empEdit == undefined) {
             ret.resultCode = 404;
             ret.resultDescription = 'Data Not Found';
@@ -187,7 +187,7 @@ exports.edit = async function (req, res) {
         //     filter.lastName = dataBranch.lastName;
         //     filter.status = "Active";
     
-        //     const result = await branchsModels.find(filter);
+        //     const result = await inventoryModels.find(filter);
     
         //     if (result.length > 0) {  
         //         ret.resultCode = 400;
@@ -202,7 +202,7 @@ exports.edit = async function (req, res) {
         dataBranch.updatedDate = now; 
         dataBranch.updatedBy = dataBranch.updatedBy || dataBranch.createdBy;
 
-        const updatedDoc = await branchsModels.findOneAndUpdate(
+        const updatedDoc = await inventoryModels.findOneAndUpdate(
             {
                 inventoryCode: inventoryCode
             }
