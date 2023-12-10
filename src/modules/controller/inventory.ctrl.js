@@ -36,8 +36,14 @@ exports.list = async function (req, res) {
             var codeArr = queryStr.paymentType.split('|');
             filter["paymentType.code"] = { $in: codeArr };
         }
-        const result = await inventoryModels.find(filter);
-        const resultTotal = await inventoryModels.find(filter).skip(offset).limit(limit).sort(sort);
+        if (queryStr.sort) {
+            let desc = queryStr.desc == 'DESC' ? -1 : 1
+            sort = { [req.query.sort]: desc };
+        } else {
+            sort = { updatedDate: 'DESC' };
+        }
+        const result = await inventoryModels.find(filter).skip(offset).limit(limit).sort(sort);
+        const resultTotal = await inventoryModels.find(filter);
         ret.resultData = result;
         ret.total = resultTotal.length
         res.json(ret);

@@ -11,6 +11,7 @@ exports.list = async function (req, res) {
         console.log(queryStr);
         let offset = req.query.offset || 0;
         let limit= req.query.limit ||10;
+        let sort = {}
 
         if (queryStr.startDate) {
             var startDtArr = queryStr.startDate.split('|');
@@ -52,8 +53,14 @@ exports.list = async function (req, res) {
             // var statusDtArr = queryStr.operationAssignDate.split('|');
             // filter.status = {$in: operationAssignDate}; // รอ spec
         }
+        if (queryStr.sort) {
+            let desc = queryStr.desc == 'DESC' ? -1 : 1
+            sort = { [req.query.sort]: desc };
+        } else {
+            sort = { updatedDate: 'DESC' };
+        }
 
-        const result = await employeesModels.find(filter).skip(offset).limit(limit);;
+        const result = await employeesModels.find(filter).skip(offset).limit(limit).sort(sort);
         const resultTotal = await employeesModels.find(filter);
         
         ret.resultData = result;

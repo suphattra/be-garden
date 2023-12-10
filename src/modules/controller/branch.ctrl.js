@@ -31,6 +31,12 @@ exports.list = async function (req, res) {
             filter.status = {};
             filter.status = { $in: statusArr };
         }
+        if (queryStr.sort) {
+            let desc = queryStr.desc == 'DESC' ? -1 : 1
+            sort = { [req.query.sort]: desc };
+        } else {
+            sort = { updatedDate: 'DESC' };
+        }
 
         const result = await branchsModels.find(filter).skip(offset).limit(limit).sort(sort);;
         const resultTotal = await branchsModels.find(filter);
