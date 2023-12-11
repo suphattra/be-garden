@@ -31,7 +31,8 @@ const EmployeeSchema = new mongoose.Schema({
     createdBy: { type: String, default: null },
     createdDate: { type: Date, default: null },
     updatedBy: { type: String, default: null },
-    updatedDate: { type: Date, default: null }
+    updatedDate: { type: Date, default: null }, 
+    status: { type: String, default: null },
 });
 
 
