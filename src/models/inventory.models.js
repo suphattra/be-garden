@@ -27,7 +27,7 @@ const InventorySchema = new mongoose.Schema({
     inventoryType: CodeValueSchema,
     paymentType: CodeValueSchema,
     unit: { type: String, default: null },
-    amount: { type: String, default: null },
+    amount: { type: Number, default: null },
     bill: BillPictureSchema,
     remark: { type: String, default: null },
     status: { type: String, default: null },
