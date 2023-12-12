@@ -36,6 +36,10 @@ exports.list = async function (req, res) {
             var codeArr = queryStr.paymentType.split('|');
             filter["paymentType.code"] = { $in: codeArr };
         }
+        if (queryStr.status) {
+            var statusDtArr = queryStr.status.split('|');
+            filter.status = { $in: statusDtArr };
+        }
         if (queryStr.sort) {
             let desc = queryStr.desc == 'DESC' ? -1 : 1
             sort = { [req.query.sort]: desc };
