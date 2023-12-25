@@ -14,18 +14,18 @@ exports.list = async function (req, res) {
         console.log(queryStr);
 
         if (queryStr.importDateFrom && queryStr.importDateTo) {
-            filter.importDate = { $gte: queryStr.importDateFrom, $lt: queryStr.importDateTo + ' 00:00:00'};
+            filter.importDate = { $gte: queryStr.importDateFrom, $lt: queryStr.importDateTo + ' 00:00:00' };
         }
-        if(queryStr.inventoryCode){
-            const condition = {$regex : '.*' + queryStr.inventoryCode + '.*',$options: 'i'}
-            filter.$or=[
-                {"inventoryCode": condition}
+        if (queryStr.inventoryCode) {
+            const condition = { $regex: '.*' + queryStr.inventoryCode + '.*', $options: 'i' }
+            filter.$or = [
+                { "inventoryCode": condition }
             ]
         }
-        if(queryStr.inventoryName){
-            const condition = {$regex : '.*' + queryStr.inventoryName + '.*',$options: 'i'}
-            filter.$or=[
-                {"inventoryName": condition}
+        if (queryStr.inventoryName) {
+            const condition = { $regex: '.*' + queryStr.inventoryName + '.*', $options: 'i' }
+            filter.$or = [
+                { "inventoryName": condition }
             ]
         }
         if (queryStr.inventoryType) {
@@ -114,52 +114,71 @@ exports.insert = async function (req, res) {
             res.json(ret);
             return;
         }
-
+        //check duplicate
         for (let i = 0; i < dataList.length; i++) {
-            var dataOper = dataList[i];
+            var inv = dataList[i];
+            var filter = {};
+            filter.inventoryName = inv.inventoryName;
+            filter.inventoryTradeName = inv.inventoryTradeName;
 
+            const result = await inventoryModels.find(filter);
 
-            var seqOperCode = await masterData.findOne({
-                "type": "SEQ",
-                "subType": "INVENTORY_CODE",
-                "status": "Active"
-            });
-            if (seqOperCode == null || seqOperCode == undefined || seqOperCode.length <= 0) {
-                ret.resultCode = 400;
-                ret.message = 'ไม่พบข้อมูล SEQ';
-                ret.resultDescription = 'Not Found';
+            if (result.length > 0) {
+                ret.resultCode = 404;
+                ret.message = 'มีรายการนี้อยู่แล้ว: ชื่อสามัญ ' + inv.inventoryName + ' ชื่อการค้า ' + inv.inventoryTradeName;
+                ret.resultDescription = 'Duplicate';
                 res.json(ret);
                 return;
-            }
+            } else {
+                var dataOper = dataList[i];
 
-            var inventoryCode  = seqOperCode.value1 + seqOperCode.value2;    //prefix + running number
-            dataOper.inventoryCode  = inventoryCode ;
 
-            //update seq
-            var seqOperCodeUpdate = await masterData.updateOne(
-                {
+                var seqOperCode = await masterData.findOne({
                     "type": "SEQ",
                     "subType": "INVENTORY_CODE",
                     "status": "Active"
-                },
-                {
-                    $inc: {
-                        value2: 1
-                    },
-                    $currentDate: {
-                        updatedDate: true
-                    }
                 });
+                if (seqOperCode == null || seqOperCode == undefined || seqOperCode.length <= 0) {
+                    ret.resultCode = 400;
+                    ret.message = 'ไม่พบข้อมูล SEQ';
+                    ret.resultDescription = 'Not Found';
+                    res.json(ret);
+                    return;
+                }
 
-            var now = new Date();
-            dataOper.createdDate = now;
-            dataOper.updatedDate = now;
-            dataOper.updatedBy = dataOper.createdBy;
+                var inventoryCode = seqOperCode.value1 + seqOperCode.value2;    //prefix + running number
+                dataOper.inventoryCode = inventoryCode;
 
-            //dataOper._id = new mongoose.Types.ObjectId();
-            const newOperation = new inventoryModels(dataOper);
-            await newOperation.save();
+                //update seq
+                var seqOperCodeUpdate = await masterData.updateOne(
+                    {
+                        "type": "SEQ",
+                        "subType": "INVENTORY_CODE",
+                        "status": "Active"
+                    },
+                    {
+                        $inc: {
+                            value2: 1
+                        },
+                        $currentDate: {
+                            updatedDate: true
+                        }
+                    });
+
+                var now = new Date();
+                dataOper.createdDate = now;
+                dataOper.updatedDate = now;
+                dataOper.updatedBy = dataOper.createdBy;
+
+                //dataOper._id = new mongoose.Types.ObjectId();
+                const newOperation = new inventoryModels(dataOper);
+                await newOperation.save();
+            }
         }
+
+        // for (let i = 0; i < dataList.length; i++) {
+
+        // }
 
 
         ret.data = {};
@@ -179,26 +198,59 @@ exports.edit = async function (req, res) {
     var ret = {
         resultCode: 200,
         resultDescription: 'Success',
-        message : "แก้ไขข้อมูลพนักงานสำเร็จ"
+        message: "แก้ไขข้อมูลพนักงานสำเร็จ"
     };
     try {
         const empEdit = await inventoryModels.findOne({ inventoryCode: inventoryCode });
-        if ( empEdit == null || empEdit == undefined) {
+        if (empEdit == null || empEdit == undefined) {
             ret.resultCode = 404;
             ret.resultDescription = 'Data Not Found';
             ret.message = "ไม่พบข้อมูล";
             return res.json(ret);
         }
+        //check duplicate for update
+
 
         var dataBranch = req.body;
+        var filter = {};
+        filter.inventoryName = dataBranch.inventoryName;
+        filter.inventoryTradeName = dataBranch.inventoryTradeName;
+
+        const result = await inventoryModels.find(filter);
+
+        // if (result.length > 0) {
+        //     ret.resultCode = 404;
+        //     ret.message = 'มีสินค้าคงคลังนี้อยู่แล้ว: ชื่อสามัญ ' + dataBranch.inventoryName + ' ชื่อการค้า ' + dataBranch.inventoryTradeName;
+        //     ret.resultDescription = 'Duplicate';
+        //     res.json(ret);
+        //     return;
+        // }
+        if (dataBranch.distribution.length > 0) {
+            let distribution = []
+            for (let i = 0; i < dataBranch.distribution.length; i++) {
+                var now = new Date();
+                var dataOper = dataBranch.distribution[i];
+                if (!dataOper.updatedDate) {
+                    dataOper.updatedDate = now;
+                    dataOper.updatedBy = dataBranch.updatedBy || dataBranch.createdBy;
+                }
+                if (!dataOper.updatedBy) {
+                    dataOper.updatedBy = dataBranch.updatedBy || dataBranch.createdBy;
+                }
+                distribution.push(dataOper)
+                console.log("dataOper", dataOper)
+            }
+            dataBranch.distribution = distribution;
+        }
+
         // if(dataBranch.firstName != empEdit.firstName || dataBranch.lastName != empEdit.lastName){
         //     var filter = {};
         //     filter.firstName = dataBranch.firstName;
         //     filter.lastName = dataBranch.lastName;
         //     filter.status = "Active";
-    
+
         //     const result = await inventoryModels.find(filter);
-    
+
         //     if (result.length > 0) {  
         //         ret.resultCode = 400;
         //         ret.message = 'มีพนักงานคนนี้อยู่แล้ว: '+ dataBranch.firstName + ' ' + dataBranch.lastName;
@@ -209,28 +261,28 @@ exports.edit = async function (req, res) {
         // }
 
         var now = new Date();
-        dataBranch.updatedDate = now; 
+        dataBranch.updatedDate = now;
         dataBranch.updatedBy = dataBranch.updatedBy || dataBranch.createdBy;
 
         const updatedDoc = await inventoryModels.findOneAndUpdate(
             {
                 inventoryCode: inventoryCode
             }
-             , 
-             dataBranch
-             ,
+            ,
+            dataBranch
+            ,
             { new: true }  // This option returns the updated document
         );
-        
+
 
 
         ret.resultData = updatedDoc;
         res.json(ret);
-      
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
-        ret.resultDescription = "System error :" +error.message;
+        ret.resultDescription = "System error :" + error.message;
         res.json(ret);
     }
 };

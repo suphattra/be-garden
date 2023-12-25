@@ -10,6 +10,8 @@ const CodeValueDisSchema = new mongoose.Schema({
     branchCode: { type: String, default: null },
     branchName: { type: String, default: null },
     amount: { type: String, default: null },
+    updatedBy: { type: String, default: null },
+    updatedDate: { type: Date, default: null }
     // value2: { type: mongoose.Schema.Types.Mixed, default: null } // Can be String or Number
 });
 const BillPictureSchema = new mongoose.Schema({
@@ -31,7 +33,7 @@ const InventorySchema = new mongoose.Schema({
     bill: BillPictureSchema,
     remark: { type: String, default: null },
     status: { type: String, default: null },
-    distribution : [CodeValueDisSchema],
+    distribution: [CodeValueDisSchema],
     // nickName: { type: String, default: null },
     // gender: CodeValueSchema,
     // nationality: CodeValueSchema,
