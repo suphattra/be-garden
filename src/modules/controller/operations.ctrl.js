@@ -1,5 +1,6 @@
 const operationsModels = require("../../models/operations.models");
 const masterData = require("../../models/masterData.models");
+const inventoryModels = require("../../models/inventory.models");
 
 exports.list = async function (req, res) {
     //var lov = req.query.lov;
@@ -17,7 +18,7 @@ exports.list = async function (req, res) {
 
         if (queryStr.startDate && queryStr.endDate) {
             var startDtArr = queryStr.startDate.split('|');
-            filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate + ' 00:00:00'};
+            filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate + ' 00:00:00' };
         }
         if (queryStr.employee) {
             var employeeCodeArr = queryStr.employee.split('|');
@@ -183,7 +184,26 @@ exports.insert = async function (req, res) {
 
             //dataOper._id = new mongoose.Types.ObjectId();
             const newOperation = new operationsModels(dataOper);
-            await newOperation.save();
+            var result = await newOperation.save();
+            if (result) {
+                if (dataOper.inventory.length > 0) {
+                    if (dataOper.operationCode === 'MD0028') {
+                        for (let i = 0; i < dataOper.inventory.length; i++) {
+                            var inventory = dataOper.inventory[i];
+                            let incamount = inventory.pickupAmount
+                            const updatedDoc = await inventoryModels.findOneAndUpdate(
+                                {
+                                    inventoryCode: inventory.inventoryCode
+                                },
+                                { $inc: { "amount": -incamount } }
+                                ,
+                                { new: true }  // This option returns the updated document
+                            );
+                        }
+                    }
+                }
+
+            }
         }
 
 
@@ -239,6 +259,45 @@ exports.edit = async function (req, res) {
         dataOper.updatedDate = now;
         dataOper.updatedBy = dataOper.createdBy;
 
+        let inventoryInsert = []
+        if (dataOper.inventory.length > 0) {
+            console.log("dataOper.operationCode", dataOper.operationStatus.code)
+            if (dataOper.operationStatus.code === 'MD0028') {
+                console.log("dataOper.operationCode", dataOper.operationStatus.code)
+
+                for (let i = 0; i < dataOper.inventory.length; i++) {
+                    var inventory = dataOper.inventory[i];
+                    if (inventory.action === 'DELETE') {
+                        console.log("inventory DELETE",inventory)
+                        let incamountAdd = inventory.pickupAmount
+                        const updatedDoc = await inventoryModels.findOneAndUpdate(
+                            {
+                                inventoryCode: inventory.inventoryCode
+                            },
+                            { $inc: { "amount": +incamountAdd } }
+                            ,
+                            { new: true }  // This option returns the updated document
+                        );
+                    } else if (inventory.action === 'NEW') {
+                        console.log("inventory NEW",inventory)
+                        let incamountDel = inventory.pickupAmount
+                        inventoryInsert.push(inventory)
+                        const updatedDoc = await inventoryModels.findOneAndUpdate(
+                            {
+                                inventoryCode: inventory.inventoryCode
+                            },
+                            { $inc: { "amount": -incamountDel } }
+                            ,
+                            { new: true }  // This option returns the updated document
+                        );
+                    } else {
+                        inventoryInsert.push(inventory)
+                    }
+                }
+
+            }
+        }
+        dataOper.inventory = inventoryInsert;
         const updatedDoc = await operationsModels.findOneAndUpdate(
             {
                 operationCode: operCode
@@ -248,7 +307,7 @@ exports.edit = async function (req, res) {
             ,
             { new: true }  // This option returns the updated document
         );
-
+        // }
 
 
         ret.resultData = updatedDoc;
