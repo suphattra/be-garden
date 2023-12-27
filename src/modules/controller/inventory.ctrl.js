@@ -1,4 +1,5 @@
 const inventoryModels = require("../../models/inventory.models");
+const inventoryHistoriesModels = require("../../models/inventoryHistories.models");
 const masterData = require("../../models/masterData.models");
 exports.list = async function (req, res) {
     var ret = {
@@ -140,6 +141,9 @@ exports.insert = async function (req, res) {
                     ,
                     { new: true }  // This option returns the updated document
                 );
+                dataOper.inventoriesID = inventory._id
+                const newOperationHis = new inventoryHistoriesModels(dataOper);
+                await newOperationHis.save();
                 ret.resultCode = 200;
                 ret.message = 'มีรายการนี้อยู่แล้ว: ระบบได้ทำการอัพเดทรายการเรียบร้อยเเล้ว';
                 ret.resultDescription = 'Success';
@@ -188,6 +192,9 @@ exports.insert = async function (req, res) {
 
                 //dataOper._id = new mongoose.Types.ObjectId();
                 const newOperation = new inventoryModels(dataOper);
+                dataOper.inventoriesID = newOperation._id //is null
+                const newOperationHis = new inventoryHistoriesModels(dataOper);
+                await newOperationHis.save();
                 await newOperation.save();
             }
         }
