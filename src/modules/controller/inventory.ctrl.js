@@ -124,9 +124,25 @@ exports.insert = async function (req, res) {
             const result = await inventoryModels.find(filter);
 
             if (result.length > 0) {
-                ret.resultCode = 404;
-                ret.message = 'มีรายการนี้อยู่แล้ว: ชื่อสามัญ ' + inv.inventoryName + ' ชื่อการค้า ' + inv.inventoryTradeName;
-                ret.resultDescription = 'Duplicate';
+                let inventory = result[0]
+                let dataOper = dataList[i];
+                var now = new Date();
+                dataOper.updatedDate = now;
+                dataOper.updatedBy = dataOper.updatedBy || dataOper.createdBy;
+                dataOper.amount = parseInt(inventory.amount) +  parseInt(dataOper.amount)
+        
+                const updatedDoc = await inventoryModels.findOneAndUpdate(
+                    {
+                        inventoryCode: inventory.inventoryCode
+                    }
+                    ,
+                    dataOper
+                    ,
+                    { new: true }  // This option returns the updated document
+                );
+                ret.resultCode = 200;
+                ret.message = 'มีรายการนี้อยู่แล้ว: ระบบได้ทำการอัพเดทรายการเรียบร้อยเเล้ว';
+                ret.resultDescription = 'Success';
                 res.json(ret);
                 return;
             } else {
@@ -175,11 +191,6 @@ exports.insert = async function (req, res) {
                 await newOperation.save();
             }
         }
-
-        // for (let i = 0; i < dataList.length; i++) {
-
-        // }
-
 
         ret.data = {};
         res.json(ret);
