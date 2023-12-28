@@ -296,6 +296,9 @@ exports.edit = async function (req, res) {
                 }
 
             }
+            else{
+                inventoryInsert=dataOper.inventory
+            }
         }
         dataOper.inventory = inventoryInsert;
         const updatedDoc = await operationsModels.findOneAndUpdate(
