@@ -10,7 +10,7 @@ exports.list = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         let offset = req.query.offset || 0;
-        let limit = req.query.limit || 10;
+        let limit = req.query.limit || 10000;
         let sort = {}
         console.log(queryStr);
 
@@ -36,6 +36,10 @@ exports.list = async function (req, res) {
         if (queryStr.paymentType) {
             var codeArr = queryStr.paymentType.split('|');
             filter["paymentType.code"] = { $in: codeArr };
+        }
+        if (queryStr.branchCode) {
+            var codeArr = queryStr.branchCode.split('|');
+            filter["distribution.branchCode"] = { $in: codeArr };
         }
         if (queryStr.status) {
             var statusDtArr = queryStr.status.split('|');
