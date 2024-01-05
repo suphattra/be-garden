@@ -295,8 +295,11 @@ exports.edit = async function (req, res) {
             ,
             { new: true }  // This option returns the updated document
         );
-
-
+        const newOperation = new inventoryModels(dataBranch);
+        delete dataBranch._id
+        dataBranch.inventoriesID = newOperation._id
+        const newOperationHis = new inventoryHistoriesModels(dataBranch);
+        await newOperationHis.save();
 
         ret.resultData = updatedDoc;
         res.json(ret);
