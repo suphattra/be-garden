@@ -1,6 +1,7 @@
 const inventoryModels = require("../../models/inventory.models");
 const inventoryHistoriesModels = require("../../models/inventoryHistories.models");
 const masterData = require("../../models/masterData.models");
+const mongoose = require('mongoose') 
 exports.list = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -131,11 +132,13 @@ exports.insert = async function (req, res) {
             if (result.length > 0) {
                 let inventory = result[0]
                 let dataOper = dataList[i];
+                let dataOperHis = dataList[i];
                 var now = new Date();
                 dataOper.updatedDate = now;
                 dataOper.updatedBy = dataOper.updatedBy || dataOper.createdBy;
-                dataOper.amount = parseInt(inventory.amount) +  parseInt(dataOper.amount)
-        
+                let amount = dataOper.amount
+                dataOper.amount = parseInt(inventory.amount) +  parseInt(amount)
+             
                 const updatedDoc = await inventoryModels.findOneAndUpdate(
                     {
                         inventoryCode: inventory.inventoryCode
@@ -145,8 +148,12 @@ exports.insert = async function (req, res) {
                     ,
                     { new: true }  // This option returns the updated document
                 );
-                dataOper.inventoriesID = inventory._id
-                const newOperationHis = new inventoryHistoriesModels(dataOper);
+                dataOperHis.amountStock = parseInt(amount)
+                dataOperHis.inventoryCode = inventory.inventoryCode
+                dataOperHis.createdBy = inventory.createdBy
+                dataOperHis.createdDate = inventory.createdDate
+                dataOperHis.inventoriesID = inventory._id
+                const newOperationHis = new inventoryHistoriesModels(dataOperHis);
                 await newOperationHis.save();
                 ret.resultCode = 200;
                 ret.message = 'มีรายการนี้อยู่แล้ว: ระบบได้ทำการอัพเดทรายการเรียบร้อยเเล้ว';
@@ -194,12 +201,13 @@ exports.insert = async function (req, res) {
                 dataOper.updatedDate = now;
                 dataOper.updatedBy = dataOper.createdBy;
 
-                //dataOper._id = new mongoose.Types.ObjectId();
+                dataOper._id = new mongoose.Types.ObjectId();
                 const newOperation = new inventoryModels(dataOper);
-                dataOper.inventoriesID = newOperation._id //is null
+                await newOperation.save();
+
+                dataOper.inventoriesID = dataOper._id
                 const newOperationHis = new inventoryHistoriesModels(dataOper);
                 await newOperationHis.save();
-                await newOperation.save();
             }
         }
 
@@ -297,6 +305,7 @@ exports.edit = async function (req, res) {
         );
         const newOperation = new inventoryModels(dataBranch);
         delete dataBranch._id
+        dataBranch.amountStock = parseInt(dataBranch.amount) - parseInt(empEdit.amount)
         dataBranch.inventoriesID = newOperation._id
         const newOperationHis = new inventoryHistoriesModels(dataBranch);
         await newOperationHis.save();
