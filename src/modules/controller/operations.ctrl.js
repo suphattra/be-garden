@@ -261,43 +261,57 @@ exports.edit = async function (req, res) {
 
         let inventoryInsert = []
         if (dataOper.inventory.length > 0) {
-            console.log("dataOper.operationCode", dataOper.operationStatus.code)
-            if (dataOper.operationStatus.code === 'MD0028') {
-                console.log("dataOper.operationCode", dataOper.operationStatus.code)
-
-                for (let i = 0; i < dataOper.inventory.length; i++) {
-                    var inventory = dataOper.inventory[i];
-                    if (inventory.action === 'DELETE') {
-                        console.log("inventory DELETE",inventory)
-                        let incamountAdd = inventory.pickupAmount
+            const result = await operationsModels.find({operationCode: operCode});
+            if(result.length > 0){
+                let operation =  result[0];
+                let operationStatus = operation.operationStatus.code
+               
+                if ((operationStatus === 'MD0027' && dataOper.operationStatus.code === 'MD0028')) {
+                    for (let i = 0; i < dataOper.inventory.length; i++) {
+                        var inventory = dataOper.inventory[i];
                         const updatedDoc = await inventoryModels.findOneAndUpdate(
                             {
                                 inventoryCode: inventory.inventoryCode
                             },
-                            { $inc: { "amount": +incamountAdd } }
+                            { $inc: { "amount": -inventory.pickupAmount } }
                             ,
                             { new: true }  // This option returns the updated document
                         );
-                    } else if (inventory.action === 'NEW') {
-                        console.log("inventory NEW",inventory)
-                        let incamountDel = inventory.pickupAmount
-                        inventoryInsert.push(inventory)
-                        const updatedDoc = await inventoryModels.findOneAndUpdate(
-                            {
-                                inventoryCode: inventory.inventoryCode
-                            },
-                            { $inc: { "amount": -incamountDel } }
-                            ,
-                            { new: true }  // This option returns the updated document
-                        );
-                    } else {
                         inventoryInsert.push(inventory)
                     }
+                }else if(dataOper.operationStatus.code === 'MD0028'){
+                    for (let i = 0; i < dataOper.inventory.length; i++) {
+                        var inventory = dataOper.inventory[i];
+                        if (inventory.action === 'DELETE') {
+                            console.log("inventory DELETE",inventory)
+                            let incamountAdd = inventory.pickupAmount
+                            const updatedDoc = await inventoryModels.findOneAndUpdate(
+                                {
+                                    inventoryCode: inventory.inventoryCode
+                                },
+                                { $inc: { "amount": +incamountAdd } }
+                                ,
+                                { new: true }  // This option returns the updated document
+                            );
+                        } else if (inventory.action === 'NEW') {
+                            console.log("inventory NEW",inventory)
+                            let incamountDel = inventory.pickupAmount
+                            inventoryInsert.push(inventory)
+                            const updatedDoc = await inventoryModels.findOneAndUpdate(
+                                {
+                                    inventoryCode: inventory.inventoryCode
+                                },
+                                { $inc: { "amount": -incamountDel } }
+                                ,
+                                { new: true }  // This option returns the updated document
+                            );
+                        } else {
+                            inventoryInsert.push(inventory)
+                        }
+                    }
+                }else{
+                    inventoryInsert=dataOper.inventory
                 }
-
-            }
-            else{
-                inventoryInsert=dataOper.inventory
             }
         }
         dataOper.inventory = inventoryInsert;
