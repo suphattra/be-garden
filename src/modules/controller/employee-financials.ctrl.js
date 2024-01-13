@@ -14,7 +14,10 @@ exports.list = async function (req, res) {
         let offset = req.query.offset || 0;
         let limit = req.query.limit || 10;
         let sort = {}
-
+        if (queryStr.employeeCode) {
+            var employeeCodeDtArr = queryStr.employeeCode.split('|');
+            filter.employeeCode = { $in: employeeCodeDtArr };
+        }
         if (queryStr.startDate && queryStr.endDate) {
             var startDtArr = queryStr.startDate.split('|');
             filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate + ' 00:00:00' };
@@ -27,6 +30,7 @@ exports.list = async function (req, res) {
             var statusDtArr = queryStr.status.split('|');
             filter.status = { $in: statusDtArr };
         }
+        
         if (queryStr.sort) {
             let desc = queryStr.desc == 'DESC' ? -1 : 1
             sort = { [req.query.sort]: desc };
@@ -107,74 +111,22 @@ exports.insert = async function (req, res) {
         }
 
 
-        //check duplicate
-        for (let i = 0; i < dataList.length; i++) {
-            var emp = dataList[i];
-            var filter = {};
-            filter.firstName = emp.firstName;
-            filter.lastName = emp.lastName;
-            filter.status = "Active";
-
-            const result = await employeesModels.find(filter);
-
-            if (result.length > 0) {
-                ret.resultCode = 404;
-                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: ' + emp.firstName + ' ' + emp.lastName;
-                ret.resultDescription = 'Duplicate';
-                res.json(ret);
-                return;
-            }
-        }
 
         var employeeList = [];
         for (let i = 0; i < dataList.length; i++) {
             var dataEmp = dataList[i];
-
-
-            var seqEmpCode = await masterData.findOne({
-                "type": "SEQ",
-                "subType": "EMPLOYEE_CODE",
-                "status": "Active"
-            });
-
-            if (seqEmpCode == null || seqEmpCode == undefined || seqEmpCode.length <= 0) {
-                ret.resultCode = 400;
-                ret.message = 'ไม่พบข้อมูล SEQ';
-                ret.resultDescription = 'Not Found';
-                res.json(ret);
-                return;
-            }
-
-            var employeeCode = seqEmpCode.value1 + seqEmpCode.value2;    //prefix + running number
-            dataEmp.employeeCode = employeeCode;
-
-            //update seq
-            var seqOperCodeUpdate = await masterData.updateOne(
-                {
-                    "type": "SEQ",
-                    "subType": "EMPLOYEE_CODE",
-                    "status": "Active"
-                },
-                {
-                    $inc: {
-                        value2: 1
-                    },
-                    $currentDate: {
-                        updatedDate: true
-                    }
-                });
 
             var now = new Date();
             dataEmp.createdDate = now;
             dataEmp.updatedDate = now;
             dataEmp.updatedBy = dataEmp.createdBy;
 
-            const newEmployee = new employeesModels(dataEmp);
+            const newEmployee = new employeesFinancialsModels(dataEmp);
             employeeList.push(newEmployee);
             //await newEmployee.save();
         }
 
-        var insertResult = await employeesModels.insertMany(dataList);
+        var insertResult = await employeesFinancialsModels.insertMany(dataList);
 
         //ret.data = {};
         res.json(ret);
@@ -188,7 +140,7 @@ exports.insert = async function (req, res) {
 };
 
 exports.edit = async function (req, res) {
-    var empCode = req.params.id;
+    var id = req.params.id;
 
     var ret = {
         resultCode: 200,
@@ -196,7 +148,8 @@ exports.edit = async function (req, res) {
         message: "แก้ไขข้อมูลพนักงานสำเร็จ"
     };
     try {
-        const empEdit = await employeesModels.findOne({ employeeCode: empCode });
+        var o_id = new mongoose.Types.ObjectId(id);
+        const empEdit = await employeesFinancialsModels.findById(o_id);
         if (empEdit == null || empEdit == undefined) {
             ret.resultCode = 404;
             ret.resultDescription = 'Data Not Found';
@@ -226,9 +179,9 @@ exports.edit = async function (req, res) {
         dataEmp.updatedDate = now;
         dataEmp.updatedBy = dataEmp.updatedBy || dataEmp.createdBy;
 
-        const updatedDoc = await employeesModels.findOneAndUpdate(
+        const updatedDoc = await employeesFinancialsModels.findOneAndUpdate(
             {
-                employeeCode: empCode
+                _id: o_id
             }
             ,
             dataEmp

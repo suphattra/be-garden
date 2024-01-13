@@ -21,7 +21,6 @@ const EmployeeFinancialsSchema = new mongoose.Schema({
         _id: { type: String, default: null },
     }),
     remark: { type: String, default: null },
-    status: { type: String, default: null },
     createdBy: { type: String, default: null },
     createdDate: { type: Date, default: null },
     updatedBy: { type: String, default: null },
