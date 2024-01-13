@@ -9,9 +9,10 @@ const operationRoute = require('./operations.route');
 const employeeRoute = require('./employee.route');
 const branchRoute = require('./branch.route');
 const inventoryRoute = require('./inventory.route');
+const financialsRoute = require('./employee-financials.route');
 router.use('/api/v1/operations', operationRoute);
 router.use('/api/v1/employee', employeeRoute);
 router.use('/api/v1/branches', branchRoute);
 router.use('/api/v1/inventories', inventoryRoute);
-
+router.use('/api/v1/employees-financials', financialsRoute);
 module.exports = router;
