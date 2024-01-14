@@ -20,7 +20,7 @@ exports.list = async function (req, res) {
         }
         if (queryStr.startDate && queryStr.endDate) {
             var startDtArr = queryStr.startDate.split('|');
-            filter.startDate = { $gte: queryStr.startDate, $lt: queryStr.endDate + ' 00:00:00' };
+            filter.transactionDate = { $gte: queryStr.startDate, $lt: queryStr.endDate + ' 00:00:00' };
         }
         if (queryStr.financialType) {
             var financialTypeArr = queryStr.financialType.split('|');
