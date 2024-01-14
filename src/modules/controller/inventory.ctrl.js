@@ -128,23 +128,32 @@ exports.insert = async function (req, res) {
             filter.inventoryTradeName = inv.inventoryTradeName;
 
             const result = await inventoryModels.find(filter);
-
+            console.log('dddddddd',result)
             if (result.length > 0) {
-                let inventory = result[0]
+                var inventory = result[0]
                 let dataOper = dataList[i];
                 let dataOperHis = dataList[i];
                 var now = new Date();
-                dataOper.updatedDate = now;
-                dataOper.updatedBy = dataOper.updatedBy || dataOper.createdBy;
+                inventory.updatedDate = now;
+                inventory.updatedBy = dataOper.updatedBy || dataOper.createdBy;
                 let amount = dataOper.amount
-                dataOper.amount = parseInt(inventory.amount) +  parseInt(amount)
-             
+                inventory.amount = parseInt(inventory.amount) +  parseInt(amount)
+                inventory.importDate = dataOper.importDate
+                inventory.inventoryType = dataOper.inventoryType
+                inventory.inventoryTradeName = dataOper.inventoryTradeName
+                inventory.inventoryName = dataOper.inventoryName
+                inventory.sellerName = dataOper.sellerName
+                inventory.unit = dataOper.unit
+                inventory.pricePerUnit = dataOper.pricePerUnit
+                inventory.paymentType = dataOper.paymentType
+                inventory.bill = dataOper.bill
+                inventory.remark = dataOper.remark
                 const updatedDoc = await inventoryModels.findOneAndUpdate(
                     {
                         inventoryCode: inventory.inventoryCode
                     }
                     ,
-                    dataOper
+                    inventory
                     ,
                     { new: true }  // This option returns the updated document
                 );
