@@ -5,7 +5,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
-    "nodemon": "^3.0.1",
+    "nodemon": "^3.0.3",
     "typescript": "^5.1.6"
   },
   "dependencies": {
@@ -14,10 +14,10 @@
     "cookie-parser": "^1.4.6",
     "dotenv-safe": "~8.2.0",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.4.0",
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
-    "njwt": "^2.0.0",
     "reflect-metadata": "^0.1.13"
   }
 }

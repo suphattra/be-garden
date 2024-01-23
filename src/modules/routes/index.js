@@ -1,6 +1,6 @@
 var router = require('express').Router();
-var login = require('../controller/login.ctrl');
-var masterCtrl = require('../controller/master.ctrl');
+// var authCtrl = require('../controller/auth.ctrl');
+// var masterCtrl = require('../controller/master.ctrl');
 
 // router.get('/api/login', login.login);
 // router.get('/api/v1/masters', masterCtrl.master);
