@@ -1,5 +1,8 @@
 const employeesModels = require("../../models/employee.models");
 const masterData = require("../../models/masterData.models");
+const authData = require("../../models/authUsers.models");
+const nJwt = require('njwt')
+const utils = require("./../../utils/index");
 exports.list = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -10,7 +13,7 @@ exports.list = async function (req, res) {
         var queryStr = req.query
         console.log(queryStr);
         let offset = req.query.offset || 0;
-        let limit= req.query.limit ||10;
+        let limit = req.query.limit || 10;
         let sort = {}
 
         if (queryStr.startDate) {
@@ -21,12 +24,12 @@ exports.list = async function (req, res) {
             var employeeCodeDtArr = queryStr.employeeCode.split('|');
             filter.employeeCode = { $in: employeeCodeDtArr };
         }
-        if(queryStr.employeeFullName){
-            const condition = {$regex : '.*' + queryStr.employeeFullName + '.*',$options: 'i'}
-            filter.$or=[
-                {"firstName": condition},
-                {"lastName": condition},
-                {"nickName": condition}
+        if (queryStr.employeeFullName) {
+            const condition = { $regex: '.*' + queryStr.employeeFullName + '.*', $options: 'i' }
+            filter.$or = [
+                { "firstName": condition },
+                { "lastName": condition },
+                { "nickName": condition }
             ]
         }
         if (queryStr.gender) {
@@ -62,7 +65,7 @@ exports.list = async function (req, res) {
 
         const result = await employeesModels.find(filter).skip(offset).limit(limit).sort(sort);
         const resultTotal = await employeesModels.find(filter);
-        
+
         ret.resultData = result;
         ret.total = resultTotal.length
         res.json(ret);
@@ -121,7 +124,7 @@ exports.unassign = async function (req, res) {
     try {
         var filter = {};
         var queryStr = req.query
-        var result =[]
+        var result = []
         if (queryStr.operationAssignDate) {
             var pipeline = [
                 // {
@@ -161,8 +164,8 @@ exports.unassign = async function (req, res) {
                     }
                 }
             ];
-            result =  await employeesModels.aggregate(pipeline);
-        }else{
+            result = await employeesModels.aggregate(pipeline);
+        } else {
             ret.resultCode = 500;
             ret.message = 'ระบบเกิดข้อผิดพลาด';
             ret.resultDescription = "กรุณาระบุ Operation Assign Date";
@@ -185,11 +188,11 @@ exports.insert = async function (req, res) {
     var ret = {
         resultCode: 200,
         resultDescription: 'Success',
-        message : "เพิ่มพนักงานสำเร็จ"
+        message: "เพิ่มพนักงานสำเร็จ"
     };
 
     try {
-        if(dataList == null || dataList == undefined || dataList.length <= 0){
+        if (dataList == null || dataList == undefined || dataList.length <= 0) {
             ret.resultCode = 400;
             ret.message = 'Bad Request';
             ret.resultDescription = 'DataList is required';
@@ -197,7 +200,7 @@ exports.insert = async function (req, res) {
             return;
         }
 
-      
+
         //check duplicate
         for (let i = 0; i < dataList.length; i++) {
             var emp = dataList[i];
@@ -208,9 +211,9 @@ exports.insert = async function (req, res) {
 
             const result = await employeesModels.find(filter);
 
-            if (result.length > 0) {  
+            if (result.length > 0) {
                 ret.resultCode = 404;
-                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: '+ emp.firstName + ' ' + emp.lastName;
+                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: ' + emp.firstName + ' ' + emp.lastName;
                 ret.resultDescription = 'Duplicate';
                 res.json(ret);
                 return;
@@ -221,21 +224,21 @@ exports.insert = async function (req, res) {
         for (let i = 0; i < dataList.length; i++) {
             var dataEmp = dataList[i];
 
-            
+
             var seqEmpCode = await masterData.findOne({
                 "type": "SEQ",
-                "subType" : "EMPLOYEE_CODE",
-                "status" : "Active"
+                "subType": "EMPLOYEE_CODE",
+                "status": "Active"
             });
 
-            if(seqEmpCode == null || seqEmpCode == undefined || seqEmpCode.length <= 0){
+            if (seqEmpCode == null || seqEmpCode == undefined || seqEmpCode.length <= 0) {
                 ret.resultCode = 400;
                 ret.message = 'ไม่พบข้อมูล SEQ';
                 ret.resultDescription = 'Not Found';
                 res.json(ret);
                 return;
             }
-            
+
             var employeeCode = seqEmpCode.value1 + seqEmpCode.value2;    //prefix + running number
             dataEmp.employeeCode = employeeCode;
 
@@ -246,9 +249,9 @@ exports.insert = async function (req, res) {
                     "subType": "EMPLOYEE_CODE",
                     "status": "Active"
                 },
-                { 
+                {
                     $inc: {
-                        value2 : 1
+                        value2: 1
                     },
                     $currentDate: {
                         updatedDate: true
@@ -269,11 +272,11 @@ exports.insert = async function (req, res) {
 
         //ret.data = {};
         res.json(ret);
-      
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
-        ret.resultDescription = "System error :" +error.message;
+        ret.resultDescription = "System error :" + error.message;
         res.json(ret);
     }
 };
@@ -284,11 +287,11 @@ exports.edit = async function (req, res) {
     var ret = {
         resultCode: 200,
         resultDescription: 'Success',
-        message : "แก้ไขข้อมูลพนักงานสำเร็จ"
+        message: "แก้ไขข้อมูลพนักงานสำเร็จ"
     };
     try {
         const empEdit = await employeesModels.findOne({ employeeCode: empCode });
-        if ( empEdit == null || empEdit == undefined) {
+        if (empEdit == null || empEdit == undefined) {
             ret.resultCode = 404;
             ret.resultDescription = 'Data Not Found';
             ret.message = "ไม่พบข้อมูล";
@@ -296,17 +299,17 @@ exports.edit = async function (req, res) {
         }
 
         var dataEmp = req.body;
-        if(dataEmp.firstName != empEdit.firstName || dataEmp.lastName != empEdit.lastName){
+        if (dataEmp.firstName != empEdit.firstName || dataEmp.lastName != empEdit.lastName) {
             var filter = {};
             filter.firstName = dataEmp.firstName;
             filter.lastName = dataEmp.lastName;
             filter.status = "Active";
-    
+
             const result = await employeesModels.find(filter);
-    
-            if (result.length > 0) {  
+
+            if (result.length > 0) {
                 ret.resultCode = 400;
-                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: '+ dataEmp.firstName + ' ' + dataEmp.lastName;
+                ret.message = 'มีพนักงานคนนี้อยู่แล้ว: ' + dataEmp.firstName + ' ' + dataEmp.lastName;
                 ret.resultDescription = 'Duplicate';
                 res.json(ret);
                 return;
@@ -314,28 +317,56 @@ exports.edit = async function (req, res) {
         }
 
         var now = new Date();
-        dataEmp.updatedDate = now; 
+        dataEmp.updatedDate = now;
         dataEmp.updatedBy = dataEmp.updatedBy || dataEmp.createdBy;
 
         const updatedDoc = await employeesModels.findOneAndUpdate(
             {
                 employeeCode: empCode
             }
-             , 
-             dataEmp
-             ,
+            ,
+            dataEmp
+            ,
             { new: true }  // This option returns the updated document
         );
-        
+
 
 
         ret.resultData = updatedDoc;
         res.json(ret);
-      
+
     } catch (error) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
-        ret.resultDescription = "System error :" +error.message;
+        ret.resultDescription = "System error :" + error.message;
+        res.json(ret);
+    }
+};
+
+exports.login = async function (req, res) {
+    var filter = {};
+    filter = req.body.username
+    console.log(filter);
+    var ret = {
+        responseCode: 200,
+        responseMessage: 'Success'
+    };
+    try {
+        const result = await authData.find({ username: filter });
+        if (result.length <= 0) {
+            ret.resultCode = 404;
+            ret.resultDescription = 'Data Not Found';
+            ret.message = "ไม่พบข้อมูล";
+        } else {
+            //Here
+        }
+        res.json(ret);
+
+
+    } catch (error) {
+        ret.responseCode = 500;
+        ret.responseMessage = 'Fail';
+        ret.responseDescription = error.message;
         res.json(ret);
     }
 };
