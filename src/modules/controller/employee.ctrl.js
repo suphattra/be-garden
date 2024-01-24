@@ -1,7 +1,6 @@
 const employeesModels = require("../../models/employee.models");
 const masterData = require("../../models/masterData.models");
 const authData = require("../../models/authUsers.models");
-const utils = require("./../../utils/index");
 exports.list = async function (req, res) {
     var ret = {
         resultCode: 200,
