@@ -1,8 +1,13 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const authModels = require("../../models/authUsers.models");
 // Secret key for JWT
 const secretKey = 'Garden_S3cr3t_K3y';
+
+function sha256(data) {
+    return crypto.createHash('sha256').update(data).digest('hex');
+}
 
 exports.login = async function (req, res) {
     const { username, password } = req.body;
@@ -12,7 +17,9 @@ exports.login = async function (req, res) {
         responseMessage: 'Success'
     };
     try {
-        var filter = { username, password , status: "Active"};
+        const hashPwd = sha256(password);
+        console.log(hashPwd);
+        var filter = { username, password : hashPwd , status: "Active"};
         //console.log(filter);
         const user = await authModels.findOne(filter);
         if(!user){
