@@ -1,9 +1,9 @@
 var router = require('express').Router();
 // var authCtrl = require('../controller/auth.ctrl');
-// var masterCtrl = require('../controller/master.ctrl');
+var masterCtrl = require('../controller/master.ctrl');
 
 // router.get('/api/login', login.login);
-// router.get('/api/v1/masters', masterCtrl.master);
+router.get('/api/v1/masters', masterCtrl.master);
 
 const operationRoute = require('./operations.route');
 const employeeRoute = require('./employee.route');
