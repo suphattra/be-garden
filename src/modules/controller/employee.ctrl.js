@@ -11,7 +11,7 @@ exports.list = async function (req, res) {
         var queryStr = req.query
         console.log(queryStr);
         let offset = req.query.offset || 0;
-        let limit = req.query.limit || 10;
+        let limit = req.query.limit || 10000;
         let sort = {}
 
         if (queryStr.startDate) {
