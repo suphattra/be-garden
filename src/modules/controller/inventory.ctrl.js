@@ -124,8 +124,8 @@ exports.insert = async function (req, res) {
         for (let i = 0; i < dataList.length; i++) {
             var inv = dataList[i];
             var filter = {};
-            filter.inventoryName = inv.inventoryName;
-            filter.inventoryTradeName = inv.inventoryTradeName;
+            filter.inventoryName = inv.inventoryName.trim();
+            filter.inventoryTradeName = inv.inventoryTradeName.trim();
 
             const result = await inventoryModels.find(filter);
             console.log('dddddddd',result)
@@ -140,10 +140,10 @@ exports.insert = async function (req, res) {
                 inventory.amount = parseInt(inventory.amount) +  parseInt(amount)
                 inventory.importDate = dataOper.importDate
                 inventory.inventoryType = dataOper.inventoryType
-                inventory.inventoryTradeName = dataOper.inventoryTradeName
-                inventory.inventoryName = dataOper.inventoryName
-                inventory.sellerName = dataOper.sellerName
-                inventory.unit = dataOper.unit
+                inventory.inventoryTradeName = dataOper.inventoryTradeName.trim()
+                inventory.inventoryName = dataOper.inventoryName.trim()
+                inventory.sellerName = dataOper.sellerName.trim()
+                inventory.unit = dataOper.unit.trim()
                 inventory.pricePerUnit = dataOper.pricePerUnit
                 inventory.paymentType = dataOper.paymentType
                 inventory.bill = dataOper.bill
@@ -252,8 +252,8 @@ exports.edit = async function (req, res) {
 
         var dataBranch = req.body;
         var filter = {};
-        filter.inventoryName = dataBranch.inventoryName;
-        filter.inventoryTradeName = dataBranch.inventoryTradeName;
+        filter.inventoryName = dataBranch.inventoryName.trim()
+        filter.inventoryTradeName = dataBranch.inventoryTradeName.trim();
 
         const result = await inventoryModels.find(filter);
 
