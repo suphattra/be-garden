@@ -1,6 +1,7 @@
 
 const branchsModels = require("../../models/branch.models");
 const operationsModels = require("../../models/operations.models");
+const masterData = require("../../models/masterData.models");
 exports.costOfWorkPerBranch = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -58,51 +59,57 @@ exports.costOfWorkPerBranch = async function (req, res) {
                 }
             ];
             let response = await branchsModels.aggregate(pipeline);
-            result.push(response)
+            // console.log("=========response", response)
+            const projection = {
+                branchCode: 1, // Include branchCode
+                branchName: 1, // Include branchName
+                color: 1, // Include branchName
+                _id: 0, // Exclude _id if you don't want it
+            };
+            var filter = {};
+            filter["branchType.code"] = { $in: 'MD0014' };
+            const branchs = await branchsModels.find(filter, projection);
 
+            const resultaaa = branchs.map((branch) => {
+                console.log("branchs", branch)
+                const { branchCode, branchName, color } = branch;
+                let data = 0//new Array(response.length).fill(0);
+                const branchData = response.find((el) => el.label === branchCode);
+                if (branchData) {
+                    data = branchData.data
+                }
+                return { branchCode, branchName, data, color };
+            });
+            // console.log("resultaaa", resultaaa)
+            result.push(resultaaa)
         }
-        const combinedData = result.reduce((result, array) => {
-            array.forEach((item, index) => {
-                const existingItem = result.find((i) => i.label === item.label);
-
-                if (existingItem) {
-                    existingItem.data.push(item.data);
+        // console.log("result", result)
+        const combinedResult = result.reduce((combined, currentArray) => {
+            currentArray.forEach((branch) => {
+                // console.log("branchs", branch)
+                const existingBranch = combined.find((item) => item.branchCode === branch.branchCode);
+                // let color = generateColorPalette(5)
+                if (existingBranch) {
+                    existingBranch.data.push(branch.data);
                 } else {
-                    let color = generateColorPalette(5)
-                    result.push({
-                        label: item.branchName,
-                        data: [item.data],
-                        // branchCode: item.label,
-                        // backgroundColor: color,
-                        // borderColor: color,
-                        borderWidth: 1,
-                        // stack: 1,
-                        // hoverBackgroundColor: 'rgba(255,99,132,0.4)',
-                        // hoverBorderColor: 'rgba(255,99,132,1)',
-                    });
+                    combined.push(
+                        {
+                            branchCode: branch.branchCode,
+                            label: branch.branchName,
+                            data: [branch.data],
+                            backgroundColor: branch.color,
+                            borderColor: branch.color,
+                        });
                 }
             });
 
-            return result;
+            return combined;
         }, []);
-
-        // Fill missing data values with 0
-        combinedData.forEach((item) => {
-            const maxDataLength = Math.max(...result.map((arr) => arr.length));
-            item.data.length = maxDataLength; // Set the length to the maximum length
-
-            for (let i = 0; i < maxDataLength; i++) {
-                if (item.data[i] === undefined) {
-                    item.data[i] = 0;
-                }
-            }
-        });
-
         let dataSet = {
-            datasets: combinedData,
+            datasets: combinedResult,
             labels: monthLabel
         }
-        ret.total = combinedData.length
+        ret.total = combinedResult.length
         ret.resultData = dataSet;
         res.json(ret);
 
@@ -145,7 +152,7 @@ exports.costOfWorkPerTask = async function (req, res) {
             var pipeline = [
                 {
                     $match: {
-                        "startDate": { $gte: queryStr.year + "-"+ month[i] + "-01", $lte: queryStr.year + "-" + month[i] + "-31 1:59:59" },
+                        "startDate": { $gte: queryStr.year + "-" + month[i] + "-01", $lte: queryStr.year + "-" + month[i] + "-31 1:59:59" },
                         "operationStatus.code": { $in: ["MD0028"] }
                     }
                 },
@@ -167,37 +174,87 @@ exports.costOfWorkPerTask = async function (req, res) {
                 }
             ];
             let response = await operationsModels.aggregate(pipeline);
-            result.push(response)
+            // console.log("response", response)
+            const projection = {
+                code: 1, // Include branchCode
+                type: 1, // Include branchCode
+                value1: 1, // Include branchName
+                value2: 1, // Include branchName
+                color: 1, // Include branchName
+                _id: 0, // Exclude _id if you don't want it
+            };
+            var filter = {};
+            filter["type"] = 'OPERATION';
+            filter["subType"] = 'TASK';
+            filter["status"] = 'Active';
+            const tasks = await masterData.find(filter, projection);
+            // console.log("tasks", tasks)
+            const resultaaa = tasks.map((task) => {
+                // console.log("task", task)
+                const { value1, code, color } = task;
+                let data = 0//new Array(response.length).fill(0);
+                const taskData = response.find((el) => el.taskCode === code);
+                if (taskData) {
+                    // console.log('ddddddd',taskData)
+                    data = taskData.total
+                }
+                return { value1, code, color, data };
+            });
+            // console.log("resultaaa", resultaaa)
+            result.push(resultaaa)
+            // result.push(response)
 
         }
 
-        const combineAndTransformData = (rawData) => {
-            const combinedData = {};
+        // const combineAndTransformData = (rawData) => {
+        //     const combinedData = {};
 
-            rawData.forEach((group) => {
-                group.forEach((item) => {
-                    const { taskCode, uniqueTaskNames, total } = item;
-                    uniqueTaskNames.forEach((taskName, index) => {
-                        const label = taskName;//taskCode;
-                        const name = taskName;
-                        const data = combinedData[label] ? [...combinedData[label].data] : Array(rawData.length).fill(0);
+        //     rawData.forEach((group) => {
+        //         group.forEach((item) => {
+        //             const { taskCode, uniqueTaskNames, total } = item;
+        //             uniqueTaskNames.forEach((taskName, index) => {
+        //                 const label = taskName;//taskCode;
+        //                 const name = taskName;
+        //                 const data = combinedData[label] ? [...combinedData[label].data] : Array(rawData.length).fill(0);
 
-                        data[index] = total;
+        //                 data[index] = total;
 
-                        combinedData[label] = { label, name, data };
-                    });
-                });
+        //                 combinedData[label] = { label, name, data };
+        //             });
+        //         });
+        //     });
+
+        //     return Object.values(combinedData);
+        // };
+
+        // const transformedData = combineAndTransformData(result);
+        // console.log("result", result)
+        const combinedResult = result.reduce((combined, currentArray) => {
+            currentArray.forEach((branch) => {
+                const existingBranch = combined.find((item) => item.code == branch.code);
+                // let color = generateColorPalette(5)
+                if (existingBranch) {
+                    existingBranch.data.push(branch.data);
+                } else {
+                    combined.push(
+                        {
+                            code: branch.code,
+                            label: branch.value1,
+                            data: [branch.data],
+                            backgroundColor: branch.color,
+                            borderColor: branch.color,
+                        });
+                }
             });
 
-            return Object.values(combinedData);
-        };
-
-        const transformedData = combineAndTransformData(result);
+            return combined;
+        }, []);
+        // console.log("combinedResult", combinedResult)
         let dataSet = {
-            datasets: transformedData,
+            datasets: combinedResult,
             labels: monthLabel
         }
-        ret.total = transformedData.length
+        ret.total = combinedResult.length
         ret.resultData = dataSet;
         res.json(ret);
 

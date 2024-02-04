@@ -43,6 +43,7 @@ const BranchSchema = new mongoose.Schema({
     createdDate: { type: Date, default: null },
     updatedBy: { type: String, default: null },
     updatedDate: { type: Date, default: null },
+    color: { type: String, default: null },
 
 });
 

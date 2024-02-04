@@ -14,7 +14,8 @@ const masterData = new mongoose.Schema(
     createdBy: { type: String, default: null },  // Added createdBy field
     createdDate: { type: Date, default: null },  // Added createdDate field
     updatedBy: { type: String, default: null },  // Added updatedBy field
-    updatedDate: { type: Date, default: null }  // Added updatedDate field
+    updatedDate: { type: Date, default: null },  // Added updatedDate field
+    color: { type: String, default: null },
  
   },
   {
