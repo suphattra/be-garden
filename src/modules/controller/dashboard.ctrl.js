@@ -13,14 +13,14 @@ exports.costOfWorkPerBranch = async function (req, res) {
         var result = []
         let month = []
         let monthLabel = []
-       let period =  queryStr.period ? queryStr.period : '1'
-        if(period === '1'){
+        let period = queryStr.period ? queryStr.period : '1'
+        if (period === '1') {
             month = ["01", "02", "03", "04"]
             monthLabel = ['January', 'February', 'March', 'April']
-        }else if(period === '2'){
+        } else if (period === '2') {
             month = ["05", "06", "07", "08"]
             monthLabel = ['May', 'June', 'July', 'August']
-        }else if(period === '3'){
+        } else if (period === '3') {
             month = ["09", "10", "11", "12"]
             monthLabel = ['September', 'October', 'November ', 'December']
         }
@@ -164,8 +164,17 @@ exports.costOfWorkPerTask = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         var result = []
-        let month = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-        let monthLabel = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November ', 'December']
+        let period = queryStr.period ? queryStr.period : '1'
+        if (period === '1') {
+            month = ["01", "02", "03", "04"]
+            monthLabel = ['January', 'February', 'March', 'April']
+        } else if (period === '2') {
+            month = ["05", "06", "07", "08"]
+            monthLabel = ['May', 'June', 'July', 'August']
+        } else if (period === '3') {
+            month = ["09", "10", "11", "12"]
+            monthLabel = ['September', 'October', 'November ', 'December']
+        }
         for (let i = 0; i < month.length; i++) {
             var pipeline = [
                 {
