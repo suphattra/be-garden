@@ -11,8 +11,21 @@ exports.costOfWorkPerBranch = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         var result = []
-        let month = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-        let monthLabel = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November ', 'December']
+        let month = []
+        let monthLabel = []
+        queryStr.period = 1
+        if(queryStr.period === '1'){
+            month = ["01", "02", "03", "04"]
+            monthLabel = ['January', 'February', 'March', 'April']
+        }else if(queryStr.period === '2'){
+            month = ["05", "06", "07", "08"]
+            monthLabel = ['May', 'June', 'July', 'August']
+        }else if(queryStr.period === '3'){
+            month = ["09", "10", "11", "12"]
+            monthLabel = ['September', 'October', 'November ', 'December']
+        }
+        // let month = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+        // let monthLabel = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November ', 'December']
         for (let i = 0; i < month.length; i++) {
             var pipeline = [
                 {
@@ -99,6 +112,11 @@ exports.costOfWorkPerBranch = async function (req, res) {
                             data: [branch.data],
                             backgroundColor: branch.color,
                             borderColor: branch.color,
+                            // borderWidth: 1,
+                            // barPercentage: 0.5,
+                            // barThickness: 6,
+                            // maxBarThickness: 8,
+                            // minBarLength: 2,
                         });
                 }
             });
@@ -243,6 +261,11 @@ exports.costOfWorkPerTask = async function (req, res) {
                             data: [branch.data],
                             backgroundColor: branch.color,
                             borderColor: branch.color,
+                            // borderWidth: 1,
+                            // barPercentage: 0.5,
+                            // barThickness: 6,
+                            // maxBarThickness: 8,
+                            // minBarLength: 2,
                         });
                 }
             });
