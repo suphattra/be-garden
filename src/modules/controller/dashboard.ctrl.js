@@ -13,14 +13,14 @@ exports.costOfWorkPerBranch = async function (req, res) {
         var result = []
         let month = []
         let monthLabel = []
-        queryStr.period = 1
-        if(queryStr.period === '1'){
+       let period =  queryStr.period ? queryStr.period : 1
+        if(period === '1'){
             month = ["01", "02", "03", "04"]
             monthLabel = ['January', 'February', 'March', 'April']
-        }else if(queryStr.period === '2'){
+        }else if(period === '2'){
             month = ["05", "06", "07", "08"]
             monthLabel = ['May', 'June', 'July', 'August']
-        }else if(queryStr.period === '3'){
+        }else if(period === '3'){
             month = ["09", "10", "11", "12"]
             monthLabel = ['September', 'October', 'November ', 'December']
         }
