@@ -11,21 +11,34 @@ exports.costOfWorkPerBranch = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         var result = []
+        var resultTable = []
         let month = []
         let monthLabel = []
+        let monthGroup = []
         let period = queryStr.period ? queryStr.period : '1'
+        let resultTableTemp = []
         if (period === '1') {
             month = ["01", "02", "03", "04"]
             monthLabel = ['January', 'February', 'March', 'April']
+            monthGroup = [
+                { display: 'January', value: "01" }, { display: 'February', value: "02" },
+                { display: 'March', value: "03" }, { display: 'April', value: "04" }
+            ]
         } else if (period === '2') {
             month = ["05", "06", "07", "08"]
             monthLabel = ['May', 'June', 'July', 'August']
+            monthGroup = [
+                { display: 'May', value: "05" }, { display: 'June', value: "06" },
+                { display: 'July', value: "07" }, { display: 'August', value: "08" }
+            ]
         } else if (period === '3') {
             month = ["09", "10", "11", "12"]
             monthLabel = ['September', 'October', 'November ', 'December']
+            monthGroup = [
+                { display: 'September', value: "09" }, { display: 'October', value: "10" },
+                { display: 'November', value: "11" }, { display: 'December', value: "12" }
+            ]
         }
-        // let month = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-        // let monthLabel = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November ', 'December']
         for (let i = 0; i < month.length; i++) {
             var pipeline = [
                 {
@@ -51,7 +64,7 @@ exports.costOfWorkPerBranch = async function (req, res) {
                 {
                     $group: {
                         _id: "$branchCode",
-                        branchDetails: { $first: "$$ROOT" }, // Include all branch details
+                        branchDetails: { $first: "$$ROOT" },
                         totalOperations: { $sum: 1 }, // Count of operations
                         allOperations: { $push: "$operationsData" } // Include all operation details
                     }
@@ -59,47 +72,72 @@ exports.costOfWorkPerBranch = async function (req, res) {
                 {
                     $match: {
                         totalOperations: { $gt: 0 },
-                        "branchDetails.branchType.code": "MD0014"// Filter branches with at least one operation
+                        "branchDetails.branchType.code": "MD0014"
+                    }
+                },
+                {
+                    $unwind: "$allOperations"
+                },
+                {
+                    $group: {
+                        _id: "$_id",
+                        branchName: { $first: "$branchDetails.branchName" },
+                        totalTaskPaymentRate: { $sum: "$allOperations.taskPaymentRate" },
+                        totalOT: { $sum: "$allOperations.otTotal" },
+                        data: { $first: "$totalOperations" }
                     }
                 },
                 {
                     $project: {
-                        _id: 0, // Exclude _id field
+                        _id: 0,
                         label: "$_id",
-                        branchName: "$branchDetails.branchName",
-                        data: "$totalOperations"
+                        branchName: 1,
+                        totalTaskPaymentRate: 1,
+                        totalOT: 1,
+                        data: 1
                     }
                 }
             ];
             let response = await branchsModels.aggregate(pipeline);
-            // console.log("=========response", response)
             const projection = {
-                branchCode: 1, // Include branchCode
-                branchName: 1, // Include branchName
-                color: 1, // Include branchName
-                _id: 0, // Exclude _id if you don't want it
+                branchCode: 1,
+                branchName: 1,
+                color: 1,
+                _id: 0,
             };
             var filter = {};
             filter["branchType.code"] = { $in: 'MD0014' };
             const branchs = await branchsModels.find(filter, projection);
 
             const resultaaa = branchs.map((branch) => {
-                console.log("branchs", branch)
                 const { branchCode, branchName, color } = branch;
-                let data = 0//new Array(response.length).fill(0);
+                let data = 0
                 const branchData = response.find((el) => el.label === branchCode);
                 if (branchData) {
-                    data = branchData.data
+                    data = branchData.totalTaskPaymentRate + branchData.totalOT
                 }
+                resultTableTemp.push({
+                    branchName: branchName
+                })
                 return { branchCode, branchName, data, color };
             });
-            // console.log("resultaaa", resultaaa)
             result.push(resultaaa)
+            let round = []
+            if (response.length <= 0) {
+            } else {
+                response.forEach(item => {
+                    let bbb = {
+                        [monthGroup.find(ele => ele.value == month[i]).display]: item.totalTaskPaymentRate + item.totalOT,
+                        branchName: item.branchName,
+                    }
+                    round.push(bbb)
+                })
+            }
+            resultTable.push(round)
         }
-        // console.log("result", result)
+        console.log('resultTable', resultTable)
         const combinedResult = result.reduce((combined, currentArray) => {
             currentArray.forEach((branch) => {
-                // console.log("branchs", branch)
                 const existingBranch = combined.find((item) => item.branchCode === branch.branchCode);
                 // let color = generateColorPalette(5)
                 if (existingBranch) {
@@ -123,11 +161,34 @@ exports.costOfWorkPerBranch = async function (req, res) {
 
             return combined;
         }, []);
+        const mergedData = {};
+
+        resultTable.forEach(dataArray => {
+            dataArray.forEach(item => {
+                const branchName = item.branchName;
+                if (!mergedData[branchName]) {
+                    mergedData[branchName] = {};
+                }
+                Object.keys(item).forEach(key => {
+                    if (key !== 'branchName') {
+                        mergedData[branchName][key] = (mergedData[branchName][key] || 0) + item[key];
+                    }
+                });
+            });
+        });
+
+        const outputArray = Object.keys(mergedData).map(branchName => ({
+            branchName,
+            ...mergedData[branchName]
+        }));
+        console.log("outputArray", outputArray);
+
         let dataSet = {
             datasets: combinedResult,
             labels: monthLabel
         }
-        ret.total = combinedResult.length
+        ret.monthGroup = monthGroup
+        ret.resultTable = outputArray.length > 0 ? outputArray : resultTableTemp
         ret.resultData = dataSet;
         res.json(ret);
 
@@ -164,16 +225,30 @@ exports.costOfWorkPerTask = async function (req, res) {
         var filter = {};
         var queryStr = req.query
         var result = []
+        var resultTable = []
+        let monthGroup = []
         let period = queryStr.period ? queryStr.period : '1'
         if (period === '1') {
             month = ["01", "02", "03", "04"]
             monthLabel = ['January', 'February', 'March', 'April']
+            monthGroup = [
+                { display: 'January', value: "01" }, { display: 'February', value: "02" },
+                { display: 'March', value: "03" }, { display: 'April', value: "04" }
+            ]
         } else if (period === '2') {
             month = ["05", "06", "07", "08"]
             monthLabel = ['May', 'June', 'July', 'August']
+            monthGroup = [
+                { display: 'May', value: "05" }, { display: 'June', value: "06" },
+                { display: 'July', value: "07" }, { display: 'August', value: "08" }
+            ]
         } else if (period === '3') {
             month = ["09", "10", "11", "12"]
             monthLabel = ['September', 'October', 'November ', 'December']
+            monthGroup = [
+                { display: 'September', value: "09" }, { display: 'October', value: "10" },
+                { display: 'November', value: "11" }, { display: 'December', value: "12" }
+            ]
         }
         for (let i = 0; i < month.length; i++) {
             var pipeline = [
@@ -186,76 +261,69 @@ exports.costOfWorkPerTask = async function (req, res) {
                 {
                     $group: {
                         _id: "$task.code",
-                        total: { $sum: 1 }, // Count of operations
-                        uniqueTaskNames: { $addToSet: "$task.value1" }, // Include all operation details
+                        total: { $sum: 1 },
+                        uniqueTaskNames: { $addToSet: "$task.value1" },
+                        totalTaskPayment: { $sum: "$taskPaymentRate" },
+                        totalOtTotal: { $sum: "$otTotal" },
+                        totalOtRateAmount: {
+                            "$sum": {
+                                "$multiply": ["$otRate", "$otAmount"]
+                            }
+                        }
                     }
                 },
                 {
                     $project: {
-                        _id: 0, // Exclude _id field, you can include it if needed
-                        taskCode: "$_id", // Rename _id to taskCode
-                        uniqueTaskNames: 1, // Include taskNames in the output
-                        total: 1 // Include total in the output
-                        // Add other fields you want to include in the projection
+                        _id: 0,
+                        taskCode: "$_id",
+                        uniqueTaskNames: 1,
+                        total: 1,
+                        totalTaskPayment: 1,
+                        totalOtTotal: 1,
+                        totalOtRateAmount: 1
                     }
                 }
             ];
             let response = await operationsModels.aggregate(pipeline);
-            // console.log("response", response)
+            console.log("response", response)
             const projection = {
-                code: 1, // Include branchCode
-                type: 1, // Include branchCode
-                value1: 1, // Include branchName
-                value2: 1, // Include branchName
-                color: 1, // Include branchName
-                _id: 0, // Exclude _id if you don't want it
+                code: 1,
+                type: 1,
+                value1: 1,
+                value2: 1,
+                color: 1,
+                _id: 0,
             };
             var filter = {};
             filter["type"] = 'OPERATION';
             filter["subType"] = 'TASK';
             filter["status"] = 'Active';
             const tasks = await masterData.find(filter, projection);
-            // console.log("tasks", tasks)
             const resultaaa = tasks.map((task) => {
-                // console.log("task", task)
-                const { value1, code, color } = task;
+                const { value1, code, color, name } = task;
                 let data = 0//new Array(response.length).fill(0);
                 const taskData = response.find((el) => el.taskCode === code);
                 if (taskData) {
-                    // console.log('ddddddd',taskData)
-                    data = taskData.total
+                    data = taskData.totalTaskPayment + taskData.totalOtRateAmount
                 }
                 return { value1, code, color, data };
             });
-            // console.log("resultaaa", resultaaa)
             result.push(resultaaa)
-            // result.push(response)
-
+            let round = []
+            if (response.length <= 0) {
+            } else {
+                response.forEach(item => {
+                    let bbb = {
+                        [monthGroup.find(ele => ele.value == month[i]).display]: item.totalTaskPayment + item.totalOtRateAmount,
+                        // taskCode: item.taskCode,
+                        taskName: item.uniqueTaskNames[0]
+                    }
+                    round.push(bbb)
+                })
+            }
+            resultTable.push(round)
         }
-
-        // const combineAndTransformData = (rawData) => {
-        //     const combinedData = {};
-
-        //     rawData.forEach((group) => {
-        //         group.forEach((item) => {
-        //             const { taskCode, uniqueTaskNames, total } = item;
-        //             uniqueTaskNames.forEach((taskName, index) => {
-        //                 const label = taskName;//taskCode;
-        //                 const name = taskName;
-        //                 const data = combinedData[label] ? [...combinedData[label].data] : Array(rawData.length).fill(0);
-
-        //                 data[index] = total;
-
-        //                 combinedData[label] = { label, name, data };
-        //             });
-        //         });
-        //     });
-
-        //     return Object.values(combinedData);
-        // };
-
-        // const transformedData = combineAndTransformData(result);
-        // console.log("result", result)
+        console.log('resultTable', resultTable)
         const combinedResult = result.reduce((combined, currentArray) => {
             currentArray.forEach((branch) => {
                 const existingBranch = combined.find((item) => item.code == branch.code);
@@ -281,12 +349,34 @@ exports.costOfWorkPerTask = async function (req, res) {
 
             return combined;
         }, []);
-        // console.log("combinedResult", combinedResult)
+        const mergedData = {};
+
+        resultTable.forEach(dataArray => {
+            dataArray.forEach(item => {
+                const taskName = item.taskName;
+                if (!mergedData[taskName]) {
+                    mergedData[taskName] = {};
+                }
+                Object.keys(item).forEach(key => {
+                    if (key !== 'taskName') {
+                        mergedData[taskName][key] = (mergedData[taskName][key] || 0) + item[key];
+                    }
+                });
+            });
+        });
+        console.log("mergedData", mergedData)
+        const outputArray = Object.keys(mergedData).map(taskName => ({
+            taskName,
+            ...mergedData[taskName]
+        }));
+
+        console.log("outputArray", outputArray);
         let dataSet = {
             datasets: combinedResult,
             labels: monthLabel
         }
-        ret.total = combinedResult.length
+        ret.monthGroup = monthGroup
+        ret.resultTable = outputArray
         ret.resultData = dataSet;
         res.json(ret);
 
