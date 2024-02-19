@@ -30,7 +30,7 @@ exports.list = async function (req, res) {
             var statusDtArr = queryStr.status.split('|');
             filter.status = { $in: statusDtArr };
         }
-        
+
         if (queryStr.sort) {
             let desc = queryStr.desc == 'DESC' ? -1 : 1
             sort = { [req.query.sort]: desc };
@@ -198,6 +198,82 @@ exports.edit = async function (req, res) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
         ret.resultDescription = "System error :" + error.message;
+        res.json(ret);
+    }
+};
+
+exports.listReport = async function (req, res) {
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success'
+    };
+
+    try {
+        var filter = {};
+        var queryStr = req.query
+        console.log(queryStr);
+        let offset = req.query.offset || 0;
+        let limit = req.query.limit || 10;
+        let sort = {}
+        if (queryStr.employeeCode) {
+            var employeeCodeDtArr = queryStr.employeeCode.split('|');
+            filter.employeeCode = { $in: employeeCodeDtArr };
+        }
+        if (queryStr.startDate && queryStr.endDate) {
+            var startDtArr = queryStr.startDate.split('|');
+            const startDate = new Date(queryStr.startDate);
+            const endDate = new Date(queryStr.endDate + ' 23:59:59');
+            filter.transactionDate = { $gte: startDate, $lt: endDate };
+        }
+        if (queryStr.financialType) {
+            var financialTypeArr = queryStr.financialType.split('|');
+            filter["financialType.code"] = { $in: financialTypeArr };
+        }
+        if (queryStr.status) {
+            var statusDtArr = queryStr.status.split('|');
+            filter.status = { $in: statusDtArr };
+        }
+
+        if (queryStr.sort) {
+            let desc = queryStr.desc == 'DESC' ? -1 : 1
+            sort = { [req.query.sort]: desc };
+        } else {
+            sort = { updatedDate: 'DESC' };
+        }
+
+        // var queryStr = req.query
+        // var result = []
+
+        var pipeline = [
+            {
+                $match: {
+                    $and: [filter],
+                },
+            },
+            {
+                $lookup: {
+                    from: "employees",
+                    localField: "employeeCode",
+                    foreignField: "employeeCode",
+                    as: "employeeData"
+                }
+            },
+            {
+                $unwind: "$employeeData" // Optional: Unwind the array if you want to work with a single document per match
+            }
+        ];
+        result = await employeesFinancialsModels.aggregate(pipeline);
+
+        ret.resultData = result;
+        ret.total = result.length
+        res.json(ret);
+
+
+    } catch (error) {
+        console.log(error)
+        ret.resultCode = 500;
+        ret.message = 'Fail';
+        ret.resultDescription = error.message;
         res.json(ret);
     }
 };
