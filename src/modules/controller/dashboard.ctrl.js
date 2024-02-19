@@ -18,25 +18,37 @@ exports.costOfWorkPerBranch = async function (req, res) {
         let period = queryStr.period ? queryStr.period : '1'
         let resultTableTemp = []
         if (period === '1') {
-            month = ["01", "02", "03", "04"]
-            monthLabel = ['January', 'February', 'March', 'April']
+            month = ["01", "02", "03"]
+            monthLabel = ['January', 'February', 'March']
             monthGroup = [
-                { display: 'January', value: "01" }, { display: 'February', value: "02" },
-                { display: 'March', value: "03" }, { display: 'April', value: "04" }
+                { display: 'January', value: "01" },
+                { display: 'February', value: "02" },
+                { display: 'March', value: "03" },
+
             ]
         } else if (period === '2') {
-            month = ["05", "06", "07", "08"]
-            monthLabel = ['May', 'June', 'July', 'August']
+            month = ["04", "05", "06"]
+            monthLabel = ['April', 'May', 'June']
             monthGroup = [
-                { display: 'May', value: "05" }, { display: 'June', value: "06" },
-                { display: 'July', value: "07" }, { display: 'August', value: "08" }
+                { display: 'April', value: "04" },
+                { display: 'May', value: "05" },
+                { display: 'June', value: "06" },
             ]
         } else if (period === '3') {
-            month = ["09", "10", "11", "12"]
-            monthLabel = ['September', 'October', 'November ', 'December']
+            month = ["07", "08", "09"]
+            monthLabel = ['July', 'August', 'September']
             monthGroup = [
-                { display: 'September', value: "09" }, { display: 'October', value: "10" },
-                { display: 'November', value: "11" }, { display: 'December', value: "12" }
+                { display: 'July', value: "07" },
+                { display: 'August', value: "08" },
+                { display: 'September', value: "09" },
+            ]
+        } else if (period === '4') {
+            month = ["10", "11", "12"]
+            monthLabel = ['October', 'November ', 'December']
+            monthGroup = [
+                { display: 'October', value: "10" },
+                { display: 'November', value: "11" },
+                { display: 'December', value: "12" }
             ]
         }
         for (let i = 0; i < month.length; i++) {
@@ -229,25 +241,37 @@ exports.costOfWorkPerTask = async function (req, res) {
         let monthGroup = []
         let period = queryStr.period ? queryStr.period : '1'
         if (period === '1') {
-            month = ["01", "02", "03", "04"]
-            monthLabel = ['January', 'February', 'March', 'April']
+            month = ["01", "02", "03"]
+            monthLabel = ['January', 'February', 'March']
             monthGroup = [
-                { display: 'January', value: "01" }, { display: 'February', value: "02" },
-                { display: 'March', value: "03" }, { display: 'April', value: "04" }
+                { display: 'January', value: "01" },
+                { display: 'February', value: "02" },
+                { display: 'March', value: "03" },
+
             ]
         } else if (period === '2') {
-            month = ["05", "06", "07", "08"]
-            monthLabel = ['May', 'June', 'July', 'August']
+            month = ["04", "05", "06"]
+            monthLabel = ['April', 'May', 'June']
             monthGroup = [
-                { display: 'May', value: "05" }, { display: 'June', value: "06" },
-                { display: 'July', value: "07" }, { display: 'August', value: "08" }
+                { display: 'April', value: "04" },
+                { display: 'May', value: "05" },
+                { display: 'June', value: "06" },
             ]
         } else if (period === '3') {
-            month = ["09", "10", "11", "12"]
-            monthLabel = ['September', 'October', 'November ', 'December']
+            month = ["07", "08", "09"]
+            monthLabel = ['July', 'August', 'September']
             monthGroup = [
-                { display: 'September', value: "09" }, { display: 'October', value: "10" },
-                { display: 'November', value: "11" }, { display: 'December', value: "12" }
+                { display: 'July', value: "07" },
+                { display: 'August', value: "08" },
+                { display: 'September', value: "09" },
+            ]
+        } else if (period === '4') {
+            month = ["10", "11", "12"]
+            monthLabel = ['October', 'November ', 'December']
+            monthGroup = [
+                { display: 'October', value: "10" },
+                { display: 'November', value: "11" },
+                { display: 'December', value: "12" }
             ]
         }
         for (let i = 0; i < month.length; i++) {
