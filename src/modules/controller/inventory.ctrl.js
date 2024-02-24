@@ -1,7 +1,7 @@
 const inventoryModels = require("../../models/inventory.models");
 const inventoryHistoriesModels = require("../../models/inventoryHistories.models");
 const masterData = require("../../models/masterData.models");
-const mongoose = require('mongoose') 
+const mongoose = require('mongoose')
 exports.list = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -128,7 +128,7 @@ exports.insert = async function (req, res) {
             filter.inventoryTradeName = inv.inventoryTradeName.trim();
 
             const result = await inventoryModels.find(filter);
-            console.log('dddddddd',result)
+            console.log('dddddddd', result)
             if (result.length > 0) {
                 var inventory = result[0]
                 let dataOper = dataList[i];
@@ -137,7 +137,7 @@ exports.insert = async function (req, res) {
                 inventory.updatedDate = now;
                 inventory.updatedBy = dataOper.updatedBy || dataOper.createdBy;
                 let amount = dataOper.amount
-                inventory.amount = parseInt(inventory.amount) +  parseInt(amount)
+                inventory.amount = parseInt(inventory.amount) + parseInt(amount)
                 inventory.importDate = dataOper.importDate
                 inventory.inventoryType = dataOper.inventoryType
                 inventory.inventoryTradeName = dataOper.inventoryTradeName.trim()
@@ -326,6 +326,91 @@ exports.edit = async function (req, res) {
         ret.resultCode = 500;
         ret.message = 'ระบบเกิดข้อผิดพลาด';
         ret.resultDescription = "System error :" + error.message;
+        res.json(ret);
+    }
+};
+
+exports.report = async function (req, res) {
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success'
+    };
+    try {
+        var filter = {};
+        var queryStr = req.query
+        let offset = req.query.offset || 0;
+        let limit = req.query.limit || 10000;
+        let sort = {}
+        console.log(queryStr);
+
+        if (queryStr.importDateFrom && queryStr.importDateTo) {
+            filter.importDate = { $gte: queryStr.importDateFrom, $lt: queryStr.importDateTo + ' 00:00:00' };
+        }
+        if (queryStr.inventoryCode) {
+            const condition = { $regex: '.*' + queryStr.inventoryCode + '.*', $options: 'i' }
+            filter.$or = [
+                { "inventoryCode": condition }
+            ]
+        }
+        if (queryStr.inventoryName) {
+            const condition = { $regex: '.*' + queryStr.inventoryName + '.*', $options: 'i' }
+            filter.$or = [
+                { "inventoryName": condition }
+            ]
+        }
+        if (queryStr.inventoryType) {
+            var codeArr = queryStr.inventoryType.split('|');
+            filter["inventoryType.code"] = { $in: codeArr };
+        }
+        if (queryStr.paymentType) {
+            var codeArr = queryStr.paymentType.split('|');
+            filter["paymentType.code"] = { $in: codeArr };
+        }
+        if (queryStr.branchCode) {
+            var codeArr = queryStr.branchCode.split('|');
+            filter["distribution.branchCode"] = { $in: codeArr };
+        }
+        if (queryStr.status) {
+            var statusDtArr = queryStr.status.split('|');
+            filter.status = { $in: statusDtArr };
+        }
+        if (queryStr.sort) {
+            let desc = queryStr.desc == 'DESC' ? -1 : 1
+            sort = { [req.query.sort]: desc };
+        } else {
+            sort = { updatedDate: 'DESC' };
+        }
+        const result = await inventoryModels.find(filter)
+        // get inventory his
+        let resultAll = []
+        if (result.length > 0) {
+            for (const item of result) {
+                const inventoryData = await inventoryHistoriesModels.find({ inventoryCode: item.inventoryCode })
+                let sumAmountStock = 0;
+                let firstImport = 0;
+                if (inventoryData) {
+                    inventoryData.forEach(item => {
+                        if (item.amountStock !== null) {
+                            sumAmountStock += item.amountStock;
+                        }else{
+                            firstImport = item.amount
+                        }
+                    });
+                }
+
+                item.amount = firstImport + sumAmountStock //จำนวนที่นำเข้าทั้งหมด
+                resultAll.push(item)
+            }
+        }
+        ret.resultData = resultAll;
+        ret.total = resultAll.length
+        res.json(ret);
+
+
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'Fail';
+        ret.resultDescription = error.message;
         res.json(ret);
     }
 };
