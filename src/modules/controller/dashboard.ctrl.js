@@ -95,7 +95,12 @@ exports.costOfWorkPerBranch = async function (req, res) {
                         _id: "$_id",
                         branchName: { $first: "$branchDetails.branchName" },
                         totalTaskPaymentRate: { $sum: "$allOperations.taskPaymentRate" },
-                        totalOT: { $sum: "$allOperations.otTotal" },
+                        // totalOT: { $sum: "$allOperations.otTotal" },
+                        totalOT: {
+                            "$sum": {
+                                "$multiply": ["$allOperations.otRate", "$allOperations.otAmount"]
+                            }
+                        },
                         data: { $first: "$totalOperations" }
                     }
                 },
@@ -108,7 +113,8 @@ exports.costOfWorkPerBranch = async function (req, res) {
                         totalOT: 1,
                         data: 1
                     }
-                }
+                },
+                { $sort: { branchName: 1 } }
             ];
             let response = await branchsModels.aggregate(pipeline);
             const projection = {
@@ -119,7 +125,7 @@ exports.costOfWorkPerBranch = async function (req, res) {
             };
             var filter = {};
             filter["branchType.code"] = { $in: 'MD0014' };
-            const branchs = await branchsModels.find(filter, projection);
+            const branchs = await branchsModels.find(filter, projection).sort({ branchName: 1 });
 
             const resultaaa = branchs.map((branch) => {
                 const { branchCode, branchName, color } = branch;
@@ -128,9 +134,6 @@ exports.costOfWorkPerBranch = async function (req, res) {
                 if (branchData) {
                     data = branchData.totalTaskPaymentRate + branchData.totalOT
                 }
-                resultTableTemp.push({
-                    branchName: branchName
-                })
                 return { branchCode, branchName, data, color };
             });
             result.push(resultaaa)
@@ -193,8 +196,15 @@ exports.costOfWorkPerBranch = async function (req, res) {
             branchName,
             ...mergedData[branchName]
         }));
-        console.log("outputArray", outputArray);
-
+        //Data result not found return branchName
+        if (outputArray.length <= 0) {
+            const branchTemp = await branchsModels.find(filter).sort({ taskCode: 1 });
+            branchTemp.map((branch) => {
+                resultTableTemp.push({
+                    branchName: branch.branchName
+                })
+            })
+        }
         let dataSet = {
             datasets: combinedResult,
             labels: monthLabel
@@ -239,6 +249,7 @@ exports.costOfWorkPerTask = async function (req, res) {
         var result = []
         var resultTable = []
         let monthGroup = []
+        let resultTableTemp = []
         let period = queryStr.period ? queryStr.period : '1'
         if (period === '1') {
             month = ["01", "02", "03"]
@@ -306,7 +317,8 @@ exports.costOfWorkPerTask = async function (req, res) {
                         totalOtTotal: 1,
                         totalOtRateAmount: 1
                     }
-                }
+                },
+                { $sort: { taskCode: 1 } }
             ];
             let response = await operationsModels.aggregate(pipeline);
             console.log("response", response)
@@ -322,7 +334,7 @@ exports.costOfWorkPerTask = async function (req, res) {
             filter["type"] = 'OPERATION';
             filter["subType"] = 'TASK';
             filter["status"] = 'Active';
-            const tasks = await masterData.find(filter, projection);
+            const tasks = await masterData.find(filter, projection).sort({ taskCode: 1 });
             const resultaaa = tasks.map((task) => {
                 const { value1, code, color, name } = task;
                 let data = 0//new Array(response.length).fill(0);
@@ -330,8 +342,10 @@ exports.costOfWorkPerTask = async function (req, res) {
                 if (taskData) {
                     data = taskData.totalTaskPayment + taskData.totalOtRateAmount
                 }
+
                 return { value1, code, color, data };
             });
+
             result.push(resultaaa)
             let round = []
             if (response.length <= 0) {
@@ -394,13 +408,21 @@ exports.costOfWorkPerTask = async function (req, res) {
             ...mergedData[taskName]
         }));
 
-        console.log("outputArray", outputArray);
+        //Data result notf ound return task
+        if (outputArray.length <= 0) {
+            const tasksTemp = await masterData.find(filter).sort({ taskCode: 1 });
+            tasksTemp.map((task) => {
+                resultTableTemp.push({
+                    taskName: task.value1
+                })
+            })
+        }
         let dataSet = {
             datasets: combinedResult,
             labels: monthLabel
         }
         ret.monthGroup = monthGroup
-        ret.resultTable = outputArray
+        ret.resultTable = outputArray.length > 0 ? outputArray : resultTableTemp
         ret.resultData = dataSet;
         res.json(ret);
 
@@ -412,5 +434,192 @@ exports.costOfWorkPerTask = async function (req, res) {
         res.json(ret);
     }
 };
+
+exports.costOfWorkAllBranch = async function (req, res) {
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success'
+    };
+    try {
+        var filter = {};
+        var queryStr = req.query
+        var result = []
+        var resultTable = []
+        let monthGroup = []
+        let allBrachTaskResult = []
+        let period = queryStr.period ? queryStr.period : '1'
+        if (period === '1') {
+            month = ["01", "02", "03"]
+            monthLabel = ['January', 'February', 'March']
+            monthGroup = [
+                { display: 'January', value: "01" },
+                { display: 'February', value: "02" },
+                { display: 'March', value: "03" },
+
+            ]
+        } else if (period === '2') {
+            month = ["04", "05", "06"]
+            monthLabel = ['April', 'May', 'June']
+            monthGroup = [
+                { display: 'April', value: "04" },
+                { display: 'May', value: "05" },
+                { display: 'June', value: "06" },
+            ]
+        } else if (period === '3') {
+            month = ["07", "08", "09"]
+            monthLabel = ['July', 'August', 'September']
+            monthGroup = [
+                { display: 'July', value: "07" },
+                { display: 'August', value: "08" },
+                { display: 'September', value: "09" },
+            ]
+        } else if (period === '4') {
+            month = ["10", "11", "12"]
+            monthLabel = ['October', 'November ', 'December']
+            monthGroup = [
+                { display: 'October', value: "10" },
+                { display: 'November', value: "11" },
+                { display: 'December', value: "12" }
+            ]
+        }
+        let dataSet = []
+        let task = []
+        for (let i = 0; i < month.length; i++) {
+            let branchTask = []
+            var pipeline = [
+                {
+                    $match: {
+                        "startDate": { $gte: queryStr.year + "-" + month[i] + "-01", $lte: queryStr.year + "-" + month[i] + "-31 1:59:59" },
+                        "operationStatus.code": { $in: ["MD0028"] },
+                        // "task.code": { $in: ["MD0096"] },
+                        // "mainBranch.branchCode": { $in: ["BR10046"] }
+                        // "task.code": { $in: ["MD0094"] },
+                        // "mainBranch.branchCode": { $in: ["BR10046"] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$mainBranch.branchCode",
+                        tasks: {
+                            $push: {
+                                taskCode: "$task.code",
+                                taskName: "$task.value1",
+                                taskPaymentRate: "$taskPaymentRate",
+                                totalOtRateAmount: {
+                                    "$sum": {
+                                        "$multiply": ["$otRate", "$otAmount"]
+                                    }
+                                }
+                            }
+                        }
+                        // tasks: {
+                        //     $addToSet: {
+                        //         taskCode: "$task.code",
+                        //         // totalTaskPaymentRate :  "$taskPaymentRate",
+                        //         totalTaskPaymentRate: { $sum: "$taskPaymentRate" },
+                        //         totalOtRateAmount: {
+                        //             "$sum": {
+                        //                 "$multiply": ["$otRate", "$otAmount"]
+                        //             }
+                        //         }
+                        //     }
+                        // }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "branches",
+                        localField: "_id",
+                        foreignField: "branchCode",
+                        as: "branch"
+                    }
+                },
+                {
+                    $unwind: "$branch"
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        branchCode: "$_id",
+                        branchName: "$branch.branchName",
+                        tasks: 1
+                    }
+                },
+                { $sort: { branchName: 1 } }
+            ]
+            let response = await operationsModels.aggregate(pipeline);
+            dataSet.push(response)
+            const projection = {
+                code: 1,
+                type: 1,
+                value1: 1,
+                value2: 1,
+                color: 1,
+                _id: 0,
+            };
+            var filterTask = {};
+            filterTask["type"] = 'OPERATION';
+            filterTask["subType"] = 'TASK';
+            filterTask["status"] = 'Active';
+            const tasks = await masterData.find(filterTask, projection);
+            task = tasks
+            // console.log('response=====', response)
+
+            if (response.length > 0) {
+
+                for (let j = 0; j < response.length; j++) {
+
+                    const taskMap = tasks.map((task) => {
+                        const { value1, code, color, name } = task;
+
+
+                        if (response.length > 0) {
+
+
+                            // console.log(data);
+                            const taskData = response[j].tasks.find((el) => el.taskCode === code);
+                            console.log('taskData', taskData)
+                            let data = 0
+                            if (taskData) {
+                                const sumTask = response[j].tasks.filter((el) => el.taskCode === code)
+                                    .reduce((acc, curr) => acc + curr.taskPaymentRate + curr.totalOtRateAmount, 0);
+                                // const sum = sumTask.reduce((acc, curr) => acc + curr.taskPaymentRate, 0);
+                                data = sumTask
+                            }
+                            return { [task.value1]: data, name: task.value1, value: data };
+                        }
+
+
+                    })
+                    branchTask.push({
+                        branchCode: response[j]?.branchCode,
+                        branchName: response[j]?.branchName,
+                        task: taskMap
+                    })
+                    // console.log('taskMap', taskMap)
+                }
+
+            }
+            // task.push(resultaaa)
+            // let dataResult = {
+            //     branchCode: response[0]?.branchCode,
+            //     branchName: response[0]?.branchName,
+            //     task: resultaaa
+            // }
+            // console.log(resultaaa)
+            // dataSet.push(dataResult)
+            allBrachTaskResult.push(branchTask)
+        }
+        ret.monthGroup = monthGroup
+        ret.taskGroup = task;
+        ret.resultData = allBrachTaskResult;
+        res.json(ret);
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'Fail';
+        ret.resultDescription = error.message;
+        res.json(ret);
+    }
+}
 
 
