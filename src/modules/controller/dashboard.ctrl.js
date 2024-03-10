@@ -2,6 +2,7 @@
 const branchsModels = require("../../models/branch.models");
 const operationsModels = require("../../models/operations.models");
 const masterData = require("../../models/masterData.models");
+const inventoryModel = require("../../models/inventory.models");
 exports.costOfWorkPerBranch = async function (req, res) {
     var ret = {
         resultCode: 200,
@@ -622,4 +623,59 @@ exports.costOfWorkAllBranch = async function (req, res) {
     }
 }
 
+
+exports.inventoryReport = async function (req, res) {
+    var ret = {
+        resultCode: 200,
+        resultDescription: 'Success'
+    };
+    try {
+        var filter = {};
+        filter["branchType.code"] = { $in: 'MD0014' };
+        filter["branchCode"] = { $nin: 'BR10106' };
+
+        const branchs = await branchsModels.find(filter).sort({ branchName: 1 });
+        var queryStr = req.query
+        const startDate = new Date(queryStr.year + "-" + queryStr.month + "-01");
+        const endDate = new Date(queryStr.year + "-" + queryStr.month + "-31" + ' 23:59:59');
+        console.log(startDate)
+        var pipeline = [
+            // { $unwind: "$distribution" },
+            { $unwind: { path: "$distribution", preserveNullAndEmptyArrays: true } },
+            {
+                $match: {
+                    "status": "Active",
+                    "distribution.updatedDate": { $gte: startDate, $lte: endDate },
+                    "distribution.branchCode": { $ne: 'BR10106' }
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    importDate: { $first: "$importDate" },
+                    inventoryCode: { $first: "$inventoryCode" },
+                    inventoryName: { $first: "$inventoryName" },
+                    inventoryTradeName: { $first: "$inventoryTradeName" },
+                    pricePerUnit: { $first: "$pricePerUnit" },
+                    sellerName: { $first: "$sellerName" },
+                    unit: { $first: "$unit" },
+                    amount: { $first: "$amount" },
+                    distribution: { $push: "$distribution" }
+                }
+            },
+            { $sort: { inventoryTradeName: 1 } }
+        ]
+        const inventory = await inventoryModel.aggregate(pipeline);
+
+        ret.branchs = branchs
+        ret.resultTable = inventory
+        ret.resultData = filter;
+        res.json(ret);
+    } catch (error) {
+        ret.resultCode = 500;
+        ret.message = 'Fail';
+        ret.resultDescription = error.message;
+        res.json(ret);
+    }
+}
 
