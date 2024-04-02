@@ -190,6 +190,9 @@ exports.insert = async function (req, res) {
                 dataOper.inventoryCode = inventoryCode;
                 dataOper.inventoryTradeName = dataOper.inventoryTradeName.trim()
                 dataOper.inventoryName = dataOper.inventoryName.trim()
+                dataOper.inventoryName = dataOper.inventoryName.trim()
+                dataOper.sellerName = dataOper.sellerName.trim()
+                dataOper.unit = dataOper.unit.trim()
 
                 //update seq
                 var seqOperCodeUpdate = await masterData.updateOne(
