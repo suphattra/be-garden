@@ -164,11 +164,11 @@ exports.insert = async function (req, res) {
                 dataOperHis.inventoriesID = inventory._id
                 const newOperationHis = new inventoryHistoriesModels(dataOperHis);
                 await newOperationHis.save();
-                ret.resultCode = 200;
-                ret.message = 'มีรายการนี้อยู่แล้ว: ระบบได้ทำการอัพเดทรายการเรียบร้อยเเล้ว';
-                ret.resultDescription = 'Success';
-                res.json(ret);
-                return;
+                // ret.resultCode = 200;
+                // ret.message = 'มีรายการนี้อยู่แล้ว: ระบบได้ทำการอัพเดทรายการเรียบร้อยเเล้ว';
+                // ret.resultDescription = 'Success';
+                // res.json(ret);
+                // return;
             } else {
                 var dataOper = dataList[i];
 
@@ -188,6 +188,8 @@ exports.insert = async function (req, res) {
 
                 var inventoryCode = seqOperCode.value1 + seqOperCode.value2;    //prefix + running number
                 dataOper.inventoryCode = inventoryCode;
+                dataOper.inventoryTradeName = dataOper.inventoryTradeName.trim()
+                dataOper.inventoryName = dataOper.inventoryName.trim()
 
                 //update seq
                 var seqOperCodeUpdate = await masterData.updateOne(
