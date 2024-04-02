@@ -36,6 +36,7 @@ const InventorySchema = new mongoose.Schema({
     status: { type: String, default: null },
     distribution: [CodeValueDisSchema],
     amountStock: { type: Number, default: null },
+    operation: { type: String, default: null },
     // nickName: { type: String, default: null },
     // gender: CodeValueSchema,
     // nationality: CodeValueSchema,

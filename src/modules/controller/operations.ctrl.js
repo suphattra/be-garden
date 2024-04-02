@@ -1,6 +1,7 @@
 const operationsModels = require("../../models/operations.models");
 const masterData = require("../../models/masterData.models");
 const inventoryModels = require("../../models/inventory.models");
+const inventoryHistoriesModels = require("../../models/inventoryHistories.models");
 
 exports.list = async function (req, res) {
     //var lov = req.query.lov;
@@ -187,7 +188,7 @@ exports.insert = async function (req, res) {
             var result = await newOperation.save();
             if (result) {
                 if (dataOper.inventory.length > 0) {
-                    if (dataOper.operationCode === 'MD0028') {
+                    if (dataOper.operationStatus.code === 'MD0028') {
                         for (let i = 0; i < dataOper.inventory.length; i++) {
                             var inventory = dataOper.inventory[i];
                             let incamount = inventory.pickupAmount
@@ -199,6 +200,39 @@ exports.insert = async function (req, res) {
                                 ,
                                 { new: true }  // This option returns the updated document
                             );
+                            //add his
+                            const result = await inventoryModels.find({
+                                inventoryCode: inventory.inventoryCode
+                            });
+                            if (result.length > 0) {
+                                var resultHis = result[0]
+                                let dataHis = {}
+                                dataHis.inventoriesID = resultHis._id
+                                dataHis.importDate = resultHis.importDate
+                                dataHis.inventoryCode = resultHis.inventoryCode
+                                dataHis.inventoryName = resultHis.inventoryName
+                                dataHis.inventoryTradeName = resultHis.inventoryTradeName
+                                dataHis.pricePerUnit = resultHis.pricePerUnit
+                                dataHis.sellerName = resultHis.sellerName
+                                dataHis.inventoryType = resultHis.inventoryType
+                                dataHis.paymentType = resultHis.paymentType
+                                dataHis.unit = resultHis.unit
+                                dataHis.amount = resultHis.amount
+                                dataHis.bill = resultHis.bill
+                                dataHis.remark = resultHis.remark
+                                dataHis.status = resultHis.status
+                                dataHis.distribution = resultHis.distribution
+                                dataHis.amountStock = '-' + incamount
+                                dataHis.operation = 'NEW_OPERATION'
+                                dataHis.createdDate = now;
+                                dataHis.updatedDate = now;
+                                dataHis.createdBy = dataOper.createdBy;
+                                dataHis.updatedBy = dataOper.createdBy;
+                                console.log("result dataHis", dataHis)
+                                const newOperationHis = new inventoryHistoriesModels(dataHis);
+                                await newOperationHis.save();
+                            }
+
                         }
                     }
                 }
@@ -261,11 +295,11 @@ exports.edit = async function (req, res) {
 
         let inventoryInsert = []
         if (dataOper.inventory.length > 0) {
-            const result = await operationsModels.find({operationCode: operCode});
-            if(result.length > 0){
-                let operation =  result[0];
+            const result = await operationsModels.find({ operationCode: operCode });
+            if (result.length > 0) {
+                let operation = result[0];
                 let operationStatus = operation.operationStatus.code
-               
+
                 if ((operationStatus === 'MD0027' && dataOper.operationStatus.code === 'MD0028')) {
                     for (let i = 0; i < dataOper.inventory.length; i++) {
                         var inventory = dataOper.inventory[i];
@@ -277,13 +311,44 @@ exports.edit = async function (req, res) {
                             ,
                             { new: true }  // This option returns the updated document
                         );
+                        //add his
+                        const result = await inventoryModels.find({
+                            inventoryCode: inventory.inventoryCode
+                        });
+                        if (result.length > 0) {
+                            var resultHis = result[0]
+                            let dataHis = {}
+                            dataHis.inventoriesID = resultHis._id
+                            dataHis.importDate = resultHis.importDate
+                            dataHis.inventoryCode = resultHis.inventoryCode
+                            dataHis.inventoryName = resultHis.inventoryName
+                            dataHis.inventoryTradeName = resultHis.inventoryTradeName
+                            dataHis.pricePerUnit = resultHis.pricePerUnit
+                            dataHis.sellerName = resultHis.sellerName
+                            dataHis.inventoryType = resultHis.inventoryType
+                            dataHis.paymentType = resultHis.paymentType
+                            dataHis.unit = resultHis.unit
+                            dataHis.amount = resultHis.amount
+                            dataHis.bill = resultHis.bill
+                            dataHis.remark = resultHis.remark
+                            dataHis.status = resultHis.status
+                            dataHis.distribution = resultHis.distribution
+                            dataHis.amountStock = '-' + inventory.pickupAmount
+                            dataHis.operation = 'UPDATE_OPERATION'
+                            dataHis.createdDate = now;
+                            dataHis.updatedDate = now;
+                            dataHis.createdBy = dataOper.createdBy;
+                            dataHis.updatedBy = dataOper.createdBy;
+                            const newOperationHis = new inventoryHistoriesModels(dataHis);
+                            await newOperationHis.save();
+                        }
                         inventoryInsert.push(inventory)
                     }
-                }else if(dataOper.operationStatus.code === 'MD0028'){
+                } else if (dataOper.operationStatus.code === 'MD0028') {
                     for (let i = 0; i < dataOper.inventory.length; i++) {
                         var inventory = dataOper.inventory[i];
                         if (inventory.action === 'DELETE') {
-                            console.log("inventory DELETE",inventory)
+                            console.log("inventory DELETE", inventory)
                             let incamountAdd = inventory.pickupAmount
                             const updatedDoc = await inventoryModels.findOneAndUpdate(
                                 {
@@ -293,8 +358,39 @@ exports.edit = async function (req, res) {
                                 ,
                                 { new: true }  // This option returns the updated document
                             );
+                            //add his
+                            const result = await inventoryModels.find({
+                                inventoryCode: inventory.inventoryCode
+                            });
+                            if (result.length > 0) {
+                                var resultHis = result[0]
+                                let dataHis = {}
+                                dataHis.inventoriesID = resultHis._id
+                                dataHis.importDate = resultHis.importDate
+                                dataHis.inventoryCode = resultHis.inventoryCode
+                                dataHis.inventoryName = resultHis.inventoryName
+                                dataHis.inventoryTradeName = resultHis.inventoryTradeName
+                                dataHis.pricePerUnit = resultHis.pricePerUnit
+                                dataHis.sellerName = resultHis.sellerName
+                                dataHis.inventoryType = resultHis.inventoryType
+                                dataHis.paymentType = resultHis.paymentType
+                                dataHis.unit = resultHis.unit
+                                dataHis.amount = resultHis.amount
+                                dataHis.bill = resultHis.bill
+                                dataHis.remark = resultHis.remark
+                                dataHis.status = resultHis.status
+                                dataHis.distribution = resultHis.distribution
+                                dataHis.amountStock = '+' + incamountAdd
+                                dataHis.operation = 'UPDATE_OPERATION_RESTOCK'
+                                dataHis.createdDate = now;
+                                dataHis.updatedDate = now;
+                                dataHis.createdBy = dataOper.createdBy;
+                                dataHis.updatedBy = dataOper.createdBy;
+                                const newOperationHis = new inventoryHistoriesModels(dataHis);
+                                await newOperationHis.save();
+                            }
                         } else if (inventory.action === 'NEW') {
-                            console.log("inventory NEW",inventory)
+                            console.log("inventory NEW", inventory)
                             let incamountDel = inventory.pickupAmount
                             inventoryInsert.push(inventory)
                             const updatedDoc = await inventoryModels.findOneAndUpdate(
@@ -305,12 +401,43 @@ exports.edit = async function (req, res) {
                                 ,
                                 { new: true }  // This option returns the updated document
                             );
+                            //add his
+                            const result = await inventoryModels.find({
+                                inventoryCode: inventory.inventoryCode
+                            });
+                            if (result.length > 0) {
+                                var resultHis = result[0]
+                                let dataHis = {}
+                                dataHis.inventoriesID = resultHis._id
+                                dataHis.importDate = resultHis.importDate
+                                dataHis.inventoryCode = resultHis.inventoryCode
+                                dataHis.inventoryName = resultHis.inventoryName
+                                dataHis.inventoryTradeName = resultHis.inventoryTradeName
+                                dataHis.pricePerUnit = resultHis.pricePerUnit
+                                dataHis.sellerName = resultHis.sellerName
+                                dataHis.inventoryType = resultHis.inventoryType
+                                dataHis.paymentType = resultHis.paymentType
+                                dataHis.unit = resultHis.unit
+                                dataHis.amount = resultHis.amount
+                                dataHis.bill = resultHis.bill
+                                dataHis.remark = resultHis.remark
+                                dataHis.status = resultHis.status
+                                dataHis.distribution = resultHis.distribution
+                                dataHis.amountStock = '-' + incamountDel
+                                dataHis.operation = 'UPDATE_OPERATION'
+                                dataHis.createdDate = now;
+                                dataHis.updatedDate = now;
+                                dataHis.createdBy = dataOper.createdBy;
+                                dataHis.updatedBy = dataOper.createdBy;
+                                const newOperationHis = new inventoryHistoriesModels(dataHis);
+                                await newOperationHis.save();
+                            }
                         } else {
                             inventoryInsert.push(inventory)
                         }
                     }
-                }else{
-                    inventoryInsert=dataOper.inventory
+                } else {
+                    inventoryInsert = dataOper.inventory
                 }
             }
         }
