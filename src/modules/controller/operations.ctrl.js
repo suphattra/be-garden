@@ -53,6 +53,7 @@ exports.list = async function (req, res) {
         const result = await operationsModels.find(filter).skip(offset).limit(limit).sort(sort);
         const resultTotal = await operationsModels.find(filter).countDocuments();
         ret.resultData = result;
+        
         ret.total = resultTotal
         res.json(ret);
 
