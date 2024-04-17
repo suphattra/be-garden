@@ -53,9 +53,9 @@ exports.list = async function (req, res) {
             sort = { updatedDate: 'DESC' };
         }
         const result = await inventoryModels.find(filter).skip(offset).limit(limit).sort(sort);
-        const resultTotal = await inventoryModels.find(filter);
+        const resultTotal = await inventoryModels.find(filter).countDocuments();
         ret.resultData = result;
-        ret.total = resultTotal.length
+        ret.total = resultTotal
         res.json(ret);
 
 
@@ -397,7 +397,7 @@ exports.report = async function (req, res) {
                     inventoryData.forEach(item => {
                         if (item.amountStock !== null) {
                             sumAmountStock += item.amountStock;
-                        }else{
+                        } else {
                             firstImport = item.amount
                         }
                     });
